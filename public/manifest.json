@@ -1,0 +1,32 @@
+{
+  "name": "ChildShield Cameroon",
+  "short_name": "ChildShield",
+  "description": "Community-powered child safety and emergency response platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080E1A",
+  "theme_color": "#080E1A",
+  "orientation": "portrait",
+  "categories": ["social", "utilities"],
+  "lang": "en",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Trigger Alert",
+      "short_name": "Alert",
+      "description": "Report a missing child immediately",
+      "url": "/alert/new",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Get Help",
+      "short_name": "Help",
+      "description": "Find nearest help center",
+      "url": "/help",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

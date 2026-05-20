@@ -13,18 +13,22 @@ import Dashboard from './pages/Dashboard'
 export default function App() {
   return (
     <AppProvider>
-      <div className="min-h-screen bg-navy-900 max-w-lg mx-auto relative">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/alert/new" element={<NewAlert />} />
-          <Route path="/alert/:id" element={<AlertDetail />} />
-          <Route path="/report" element={<AnonymousReport />} />
-          <Route path="/abuse-report" element={<AbuseReport />} />
-          <Route path="/map" element={<SafeZones />} />
-          <Route path="/help" element={<GetHelp />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-        </Routes>
+      <div className="min-h-screen bg-[#080E1A] flex">
         <BottomNav />
+        <main className="flex-1 md:ml-52 min-w-0">
+          <div className="max-w-3xl mx-auto">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/alert/new" element={<NewAlert />} />
+              <Route path="/alert/:id" element={<AlertDetail />} />
+              <Route path="/report" element={<AnonymousReport />} />
+              <Route path="/abuse-report" element={<AbuseReport />} />
+              <Route path="/map" element={<SafeZones />} />
+              <Route path="/help" element={<GetHelp />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+            </Routes>
+          </div>
+        </main>
       </div>
     </AppProvider>
   )

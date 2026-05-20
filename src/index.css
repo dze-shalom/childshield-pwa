@@ -24,7 +24,7 @@
 
 @layer components {
   .page {
-    @apply min-h-screen pb-24 pt-4 px-4;
+    @apply min-h-screen pb-24 pt-4 px-4 md:pb-8 md:pt-6 md:px-8;
   }
   
   .card {

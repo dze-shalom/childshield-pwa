@@ -1,3 +1,5 @@
 childvoice-bot/.env
 .env
 .env.local
+node_modules
+childvoice-bot/node_modules

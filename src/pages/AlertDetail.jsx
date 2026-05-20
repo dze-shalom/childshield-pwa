@@ -20,10 +20,35 @@ export default function AlertDetail() {
   )
 
   const timeAgo = formatDistanceToNow(new Date(alert.createdAt), { addSuffix: true })
+  const lastSeenDisplay = alert.lastSeenTime
+    ? format(new Date(alert.lastSeenTime), 'EEEE, dd MMM yyyy · HH:mm')
+    : 'Time not recorded'
 
-  const handleWhatsAppShare = () => {
+  const shareMessage = () => {
     const url = `${window.location.origin}/alert/${alert.id}`
-    const message = `🚨 *MISSING CHILD ALERT*\n\n*ChildShield Cameroon*\n\n👤 *Name:* ${alert.name}\n🎂 *Age:* ${alert.age} years old (${alert.gender})\n📍 *Last seen:* ${alert.lastSeen}\n🕐 *Time:* ${format(new Date(alert.lastSeenTime), 'dd MMM yyyy, HH:mm')}\n👗 *Description:* ${alert.description}\n\n📞 *Contact:* ${alert.contact}\n\n🔗 Report sightings:\n${url}\n\n_Please share widely. Every second counts._\n_ChildShield — Community Child Safety_`
+    const time = alert.lastSeenTime ? format(new Date(alert.lastSeenTime), 'dd MMM yyyy, HH:mm') : 'Unknown time'
+    return `🚨 *MISSING CHILD ALERT*\n\n*ChildShield Cameroon*\n\n👤 *Name:* ${alert.name}\n🎂 *Age:* ${alert.age} years old (${alert.gender})\n📍 *Last seen:* ${alert.lastSeen}\n🕐 *Time:* ${time}\n👗 *Description:* ${alert.description}\n\n📞 *Contact:* ${alert.contact}\n\n🔗 Report sightings:\n${url}\n\n_Please share widely. Every second counts._\n_ChildShield — Community Child Safety_`
+  }
+
+  const handleShare = async () => {
+    const message = shareMessage()
+    // Try Web Share API with photo first (works on mobile browsers)
+    if (alert.photo && navigator.share) {
+      try {
+        const res = await fetch(alert.photo)
+        const blob = await res.blob()
+        const file = new File([blob], `missing-${alert.name.replace(/\s+/g, '-')}.jpg`, { type: blob.type })
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ title: `Missing Child: ${alert.name}`, text: message, files: [file] })
+          return
+        }
+      } catch (_) { /* fall through */ }
+    }
+    // Web Share API without photo
+    if (navigator.share) {
+      try { await navigator.share({ title: `Missing Child: ${alert.name}`, text: message }); return } catch (_) { /* fall through */ }
+    }
+    // Fallback: WhatsApp link
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank')
   }
 
@@ -49,7 +74,7 @@ export default function AlertDetail() {
         </button>
         <h1 className="font-syne font-bold text-white text-lg flex-1">Alert Details</h1>
         {alert.status === 'active' && (
-          <button onClick={handleWhatsAppShare} className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600/20 rounded-xl text-emerald-400 text-sm font-medium">
+          <button onClick={handleShare} className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600/20 rounded-xl text-emerald-400 text-sm font-medium">
             <Share2 size={14} />
             Share
           </button>
@@ -64,10 +89,11 @@ export default function AlertDetail() {
       {/* Child Profile Card */}
       <div className="card p-5 mb-4">
         <div className="flex items-start gap-4">
-          <div className="w-16 h-16 bg-red-900/30 rounded-2xl flex items-center justify-center flex-shrink-0">
-            <span className="font-syne font-extrabold text-xl text-white/70">
-              {alert.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
-            </span>
+          <div className="w-16 h-16 bg-red-900/30 rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden">
+            {alert.photo
+              ? <img src={alert.photo} alt={alert.name} className="w-full h-full object-cover" />
+              : <span className="font-syne font-extrabold text-xl text-white/70">{alert.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}</span>
+            }
           </div>
           <div className="flex-1">
             <h2 className="font-syne font-bold text-white text-xl">{alert.name}</h2>
@@ -84,7 +110,7 @@ export default function AlertDetail() {
             <div>
               <p className="text-white/40 text-xs">Last Seen</p>
               <p className="text-white text-sm font-medium">{alert.lastSeen}</p>
-              <p className="text-white/40 text-xs">{format(new Date(alert.lastSeenTime), 'EEEE, dd MMM yyyy · HH:mm')}</p>
+              <p className="text-white/40 text-xs">{lastSeenDisplay}</p>
             </div>
           </div>
 
@@ -115,7 +141,7 @@ export default function AlertDetail() {
 
       {/* WhatsApp Share CTA */}
       {alert.status === 'active' && (
-        <button onClick={handleWhatsAppShare} className="w-full card p-4 mb-4 flex items-center gap-4 hover:border-emerald-500/30 transition-all bg-emerald-500/5 border-emerald-500/20">
+        <button onClick={handleShare} className="w-full card p-4 mb-4 flex items-center gap-4 hover:border-emerald-500/30 transition-all bg-emerald-500/5 border-emerald-500/20">
           <div className="w-10 h-10 bg-emerald-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
             <Share2 size={20} className="text-emerald-400" />
           </div>

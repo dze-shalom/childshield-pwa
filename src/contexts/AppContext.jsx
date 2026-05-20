@@ -1,52 +1,249 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
 import { mockAlerts, mockIncidents } from '../data/mockData'
+import { supabase } from '../lib/supabase'
 
 const AppContext = createContext(null)
 
-export function AppProvider({ children }) {
-  const [alerts, setAlerts] = useState(mockAlerts)
-  const [incidents, setIncidents] = useState(mockIncidents)
-  const [user, setUser] = useState({ role: 'public', name: 'Guest' }) // roles: public, verified, moderator, admin
-  const [notifications, setNotifications] = useState(2)
+// True only when real Supabase credentials are provided
+const CONFIGURED =
+  !!import.meta.env.VITE_SUPABASE_URL &&
+  !import.meta.env.VITE_SUPABASE_URL.includes('your-project')
 
-  const addAlert = (alert) => {
-    const newAlert = {
-      ...alert,
-      id: `a${Date.now()}`,
-      status: 'active',
-      sightings: [],
-      createdAt: new Date().toISOString(),
+// ── Field mappers: Supabase snake_case → app camelCase ─────────────────────
+
+const toSighting = (row) => ({
+  id: row.id,
+  alertId: row.alert_id,
+  reportedBy: row.reported_by,
+  location: row.location,
+  description: row.description,
+  lat: row.lat,
+  lng: row.lng,
+  verified: row.verified,
+  time: row.time,
+})
+
+const toAlert = (row) => ({
+  id: row.id,
+  name: row.name,
+  age: row.age,
+  gender: row.gender,
+  description: row.description,
+  lastSeen: row.last_seen,
+  lastSeenTime: row.last_seen_time,
+  status: row.status,
+  photo: row.photo_url,
+  lat: row.lat,
+  lng: row.lng,
+  contact: row.contact,
+  createdBy: row.created_by,
+  createdAt: row.created_at,
+  sightings: (row.sightings || []).map(toSighting),
+})
+
+const toIncident = (row) => ({
+  id: row.id,
+  type: row.type,
+  typeLabel: row.type_label || row.type,
+  description: row.description,
+  location: row.location,
+  lat: row.lat,
+  lng: row.lng,
+  severity: row.severity,
+  status: row.status,
+  time: row.time,
+})
+
+// ── Moderator webhook (optional) ───────────────────────────────────────────
+
+const notifyModerator = (type, payload) => {
+  const url = import.meta.env.VITE_MODERATOR_WEBHOOK
+  if (!url) return
+  fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type, ...payload, timestamp: new Date().toISOString() }),
+  }).catch(() => {}) // fire-and-forget
+}
+
+// ── Provider ───────────────────────────────────────────────────────────────
+
+export function AppProvider({ children }) {
+  const [alerts, setAlerts] = useState([])
+  const [incidents, setIncidents] = useState([])
+  const [user, setUser] = useState({ role: 'public', name: 'Guest' })
+  const [notifications, setNotifications] = useState(0)
+  const [loading, setLoading] = useState(CONFIGURED)
+
+  useEffect(() => {
+    if (!CONFIGURED) {
+      // Local dev — use mock data so the app works without Supabase credentials
+      setAlerts(mockAlerts)
+      setIncidents(mockIncidents)
+      return
     }
-    setAlerts((prev) => [newAlert, ...prev])
+
+    // ── Initial data fetch ────────────────────────────────────────────────
+    Promise.all([
+      supabase.from('alerts').select('*, sightings(*)').order('created_at', { ascending: false }),
+      supabase.from('incidents').select('*').order('time', { ascending: false }),
+    ]).then(([{ data: alertRows, error: ae }, { data: incRows, error: ie }]) => {
+      if (!ae && alertRows) setAlerts(alertRows.map(toAlert))
+      if (!ie && incRows)   setIncidents(incRows.map(toIncident))
+      setLoading(false)
+    })
+
+    // ── Real-time subscriptions ───────────────────────────────────────────
+    const channel = supabase
+      .channel('childshield-realtime')
+
+      // New missing-child alert (from web app or WhatsApp bot)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'alerts' }, ({ new: row }) => {
+        const alert = { ...toAlert(row), sightings: [] }
+        setAlerts((prev) => [alert, ...prev.filter((a) => a.id !== alert.id)])
+        setNotifications((n) => n + 1)
+        if (Notification.permission === 'granted') {
+          new Notification('🚨 Missing Child Alert', {
+            body: `${alert.name} · ${alert.age} yrs · Last seen: ${alert.lastSeen}`,
+            icon: '/icons/icon-192.png',
+            tag: alert.id,
+            requireInteraction: true,
+          })
+        }
+      })
+
+      // Alert status changed (e.g. resolved)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'alerts' }, ({ new: row }) => {
+        setAlerts((prev) => prev.map((a) => a.id === row.id ? { ...a, status: row.status } : a))
+      })
+
+      // New sighting added
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'sightings' }, ({ new: row }) => {
+        const s = toSighting(row)
+        setAlerts((prev) => prev.map((a) =>
+          a.id === s.alertId ? { ...a, sightings: [...a.sightings.filter((x) => x.id !== s.id), s] } : a
+        ))
+      })
+
+      // New incident report (from web app or WhatsApp bot)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'incidents' }, ({ new: row }) => {
+        const inc = toIncident(row)
+        setIncidents((prev) => [inc, ...prev.filter((i) => i.id !== inc.id)])
+        if (Notification.permission === 'granted') {
+          new Notification('📋 New Incident Report', {
+            body: `${inc.typeLabel} · ${inc.location || 'Location not specified'}`,
+            icon: '/icons/icon-192.png',
+            tag: inc.id,
+          })
+        }
+      })
+
+      .subscribe()
+
+    return () => supabase.removeChannel(channel)
+  }, [])
+
+  // ── Mutations ─────────────────────────────────────────────────────────────
+
+  const addAlert = async (alert) => {
+    if (!CONFIGURED) {
+      const newAlert = {
+        ...alert, id: `a${Date.now()}`, status: 'active',
+        sightings: [], createdAt: new Date().toISOString(),
+      }
+      setAlerts((prev) => [newAlert, ...prev])
+      return newAlert
+    }
+
+    const { data, error } = await supabase.from('alerts').insert([{
+      name: alert.name,
+      age: alert.age,
+      gender: alert.gender,
+      description: alert.description,
+      last_seen: alert.lastSeen,
+      last_seen_time: alert.lastSeenTime,
+      photo_url: alert.photo,
+      lat: alert.lat,
+      lng: alert.lng,
+      contact: alert.contact,
+      created_by: alert.createdBy,
+      status: 'active',
+      source: 'web',
+    }]).select().single()
+
+    if (error) throw error
+    const newAlert = { ...toAlert(data), sightings: [] }
+    setAlerts((prev) => [newAlert, ...prev.filter((a) => a.id !== newAlert.id)])
     return newAlert
   }
 
-  const addSighting = (alertId, sighting) => {
-    setAlerts((prev) =>
-      prev.map((a) =>
+  const addSighting = async (alertId, sighting) => {
+    if (!CONFIGURED) {
+      setAlerts((prev) => prev.map((a) =>
         a.id === alertId
           ? { ...a, sightings: [...a.sightings, { ...sighting, id: `s${Date.now()}`, time: new Date().toISOString(), verified: false }] }
           : a
-      )
-    )
-  }
-
-  const addIncident = (incident) => {
-    const newIncident = {
-      ...incident,
-      id: `i${Date.now()}`,
-      status: 'under_review',
-      time: new Date().toISOString(),
+      ))
+      return
     }
-    setIncidents((prev) => [newIncident, ...prev])
+
+    const { data, error } = await supabase.from('sightings').insert([{
+      alert_id: alertId,
+      reported_by: sighting.reportedBy || 'Anonymous',
+      location: sighting.location,
+      description: sighting.description,
+      verified: false,
+    }]).select().single()
+
+    if (error) throw error
+    const s = toSighting(data)
+    setAlerts((prev) => prev.map((a) =>
+      a.id === alertId ? { ...a, sightings: [...a.sightings.filter((x) => x.id !== s.id), s] } : a
+    ))
   }
 
-  const resolveAlert = (alertId) => {
-    setAlerts((prev) => prev.map((a) => (a.id === alertId ? { ...a, status: 'resolved' } : a)))
+  const addIncident = async (incident) => {
+    notifyModerator('incident', {
+      type: incident.typeLabel || incident.type,
+      location: incident.location,
+      severity: incident.severity,
+    })
+
+    if (!CONFIGURED) {
+      const newIncident = { ...incident, id: `i${Date.now()}`, status: 'under_review', time: new Date().toISOString() }
+      setIncidents((prev) => [newIncident, ...prev])
+      return
+    }
+
+    const { data, error } = await supabase.from('incidents').insert([{
+      type: incident.type,
+      type_label: incident.typeLabel,
+      description: incident.description,
+      location: incident.location,
+      lat: incident.lat,
+      lng: incident.lng,
+      severity: incident.severity || 'medium',
+      status: 'under_review',
+      source: 'web',
+    }]).select().single()
+
+    if (error) throw error
+    const newIncident = toIncident(data)
+    setIncidents((prev) => [newIncident, ...prev.filter((i) => i.id !== newIncident.id)])
+  }
+
+  const resolveAlert = async (alertId) => {
+    if (!CONFIGURED) {
+      setAlerts((prev) => prev.map((a) => a.id === alertId ? { ...a, status: 'resolved' } : a))
+      return
+    }
+    const { error } = await supabase.from('alerts').update({ status: 'resolved' }).eq('id', alertId)
+    if (error) throw error
+    setAlerts((prev) => prev.map((a) => a.id === alertId ? { ...a, status: 'resolved' } : a))
   }
 
   return (
-    <AppContext.Provider value={{ alerts, incidents, user, setUser, notifications, addAlert, addSighting, addIncident, resolveAlert }}>
+    <AppContext.Provider value={{ alerts, incidents, user, setUser, notifications, loading, addAlert, addSighting, addIncident, resolveAlert }}>
       {children}
     </AppContext.Provider>
   )

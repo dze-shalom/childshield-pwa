@@ -6,8 +6,11 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
       registerType: 'autoUpdate',
-      includeAssets: ['icons/*.png', 'icons/*.svg'],
+      includeAssets: ['icons/*.png'],
       manifest: {
         name: 'ChildShield Cameroon',
         short_name: 'ChildShield',
@@ -19,19 +22,13 @@ export default defineConfig({
         start_url: '/',
         icons: [
           { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
-        ]
+          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+        ],
+        shortcuts: [
+          { name: 'Report Missing Child', url: '/alert/new', icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }] },
+          { name: 'Get Help', url: '/help', icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }] },
+        ],
       },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/tile\.openstreetmap\.org\/.*/i,
-            handler: 'CacheFirst',
-            options: { cacheName: 'map-tiles', expiration: { maxEntries: 200 } }
-          }
-        ]
-      }
-    })
-  ]
+    }),
+  ],
 })

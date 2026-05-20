@@ -29,9 +29,11 @@ export default function NewAlert() {
   const handlePhotoSelect = (e) => {
     const file = e.target.files[0]
     if (!file) return
-    update('photo', file)
     const reader = new FileReader()
-    reader.onload = (ev) => setPhotoPreview(ev.target.result)
+    reader.onload = (ev) => {
+      setPhotoPreview(ev.target.result)
+      update('photo', ev.target.result) // store data URL, not File object
+    }
     reader.readAsDataURL(file)
   }
 
@@ -41,13 +43,14 @@ export default function NewAlert() {
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
-  const handleSubmit = () => {
-    const alert = {
+  const handleSubmit = async () => {
+    const alertData = {
       ...form,
       age: parseInt(form.age),
       lastSeen: form.lastSeen === 'Other (type below)' ? form.customLocation : form.lastSeen,
+      lastSeenTime: new Date().toISOString(),
     }
-    const newAlert = addAlert(alert)
+    const newAlert = await addAlert(alertData)
     setSubmitted(true)
     setTimeout(() => navigate(`/alert/${newAlert.id}`), 2000)
   }
@@ -88,11 +91,13 @@ export default function NewAlert() {
       {step === 1 && (
         <div className="space-y-4 animate-fade-up">
           <div className="card p-4 flex flex-col items-center gap-3 border-dashed border-white/10">
+            {/* sr-only input with label — works on iOS Safari unlike display:none + .click() */}
             <input
               ref={fileInputRef}
+              id="child-photo-input"
               type="file"
               accept="image/*"
-              className="hidden"
+              className="sr-only"
               onChange={handlePhotoSelect}
             />
             {photoPreview ? (
@@ -106,15 +111,15 @@ export default function NewAlert() {
                 </button>
               </div>
             ) : (
-              <div className="w-20 h-20 bg-white/5 rounded-2xl flex flex-col items-center justify-center gap-2">
+              <label htmlFor="child-photo-input" className="w-20 h-20 bg-white/5 rounded-2xl flex flex-col items-center justify-center gap-2 cursor-pointer">
                 <Camera size={24} className="text-white/30" />
                 <span className="text-white/30 text-xs">Photo</span>
-              </div>
+              </label>
             )}
             <p className="text-white/40 text-xs text-center">Upload child's photo (optional but recommended)</p>
-            <button className="btn-secondary text-sm py-2 px-4" onClick={() => fileInputRef.current?.click()}>
+            <label htmlFor="child-photo-input" className="btn-secondary text-sm py-2 px-4 cursor-pointer">
               {photoPreview ? 'Change Photo' : 'Upload Photo'}
-            </button>
+            </label>
           </div>
 
           <div>
@@ -230,6 +235,12 @@ export default function NewAlert() {
           {/* Summary */}
           <div className="card p-4 space-y-2">
             <h3 className="font-syne font-bold text-white text-sm mb-3">Alert Summary</h3>
+            {photoPreview && (
+              <div className="flex items-center gap-3 pb-2 mb-1 border-b border-white/5">
+                <img src={photoPreview} alt="Child photo" className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
+                <span className="text-white/50 text-xs">Photo attached</span>
+              </div>
+            )}
             {[
               { label: 'Name', value: form.name },
               { label: 'Age', value: `${form.age} years, ${form.gender}` },

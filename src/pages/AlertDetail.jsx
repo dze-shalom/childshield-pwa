@@ -87,22 +87,37 @@ export default function AlertDetail() {
       </div>
 
       {/* Child Profile Card */}
-      <div className="card p-5 mb-4">
-        <div className="flex items-start gap-4">
-          <div className="w-16 h-16 bg-red-900/30 rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden">
-            {alert.photo
-              ? <img src={alert.photo} alt={alert.name} className="w-full h-full object-cover" />
-              : <span className="font-syne font-extrabold text-xl text-white/70">{alert.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}</span>
-            }
+      <div className="card mb-4 overflow-hidden">
+        {/* Full-width photo when available */}
+        {alert.photo ? (
+          <div style={{ position: 'relative' }}>
+            <img
+              src={alert.photo}
+              alt={alert.name}
+              style={{ width: '100%', height: 220, objectFit: 'cover', display: 'block' }}
+            />
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '32px 16px 14px', background: 'linear-gradient(to top, rgba(8,14,26,0.95), transparent)' }}>
+              <h2 className="font-syne font-bold text-white text-xl" style={{ margin: 0 }}>{alert.name}</h2>
+              <p className="text-white/70 text-sm" style={{ margin: '2px 0 0' }}>{alert.age} years old · {alert.gender}</p>
+            </div>
           </div>
-          <div className="flex-1">
-            <h2 className="font-syne font-bold text-white text-xl">{alert.name}</h2>
-            <p className="text-white/50 text-sm">{alert.age} years old · {alert.gender}</p>
-            <p className="text-white/40 text-xs mt-1">Reported {timeAgo}</p>
+        ) : (
+          <div className="flex items-start gap-4 p-5">
+            <div className="w-16 h-16 bg-red-900/30 rounded-2xl flex items-center justify-center flex-shrink-0">
+              <span className="font-syne font-extrabold text-xl text-white/70">
+                {alert.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+              </span>
+            </div>
+            <div className="flex-1">
+              <h2 className="font-syne font-bold text-white text-xl">{alert.name}</h2>
+              <p className="text-white/50 text-sm">{alert.age} years old · {alert.gender}</p>
+              <p className="text-white/40 text-xs mt-1">Reported {timeAgo}</p>
+            </div>
           </div>
-        </div>
+        )}
+        {alert.photo && <p className="text-white/30 text-xs px-5 pt-2 pb-1" style={{ margin: 0 }}>Reported {timeAgo}</p>}
 
-        <div className="mt-4 space-y-3 pt-4 border-t border-white/5">
+        <div className="mt-4 space-y-3 pt-4 border-t border-white/5 px-5 pb-5">
           <div className="flex items-start gap-3">
             <div className="w-7 h-7 bg-white/5 rounded-lg flex items-center justify-center flex-shrink-0">
               <MapPin size={14} className="text-red-400" />

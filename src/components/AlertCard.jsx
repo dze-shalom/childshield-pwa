@@ -27,8 +27,11 @@ export default function AlertCard({ alert }) {
   return (
     <div className="card" style={{ padding: 14 }}>
       <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-        <div style={{ width: 48, height: 48, background: 'rgba(239,68,68,0.15)', borderRadius: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, position: 'relative' }}>
-          <span style={{ fontWeight: 800, fontSize: 16, color: '#F1F5F9' }}>{initials}</span>
+        <div style={{ width: 56, height: 56, background: 'rgba(239,68,68,0.15)', borderRadius: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
+          {alert.photo
+            ? <img src={alert.photo} alt={alert.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            : <span style={{ fontWeight: 800, fontSize: 16, color: '#F1F5F9' }}>{initials}</span>
+          }
           {status.dot && <span style={{ position: 'absolute', top: -3, right: -3, width: 10, height: 10, background: '#EF4444', borderRadius: '50%', border: '2px solid #111827' }} />}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>

@@ -1680,7 +1680,7 @@ class ve {
     this._cacheExpirations = /* @__PURE__ */ new Map();
   }
 }
-Re([{"revision":"1872c500de691dce40960bb85481de07","url":"registerSW.js"},{"revision":"935bf9b53c8a04e7db5401f06f0783ce","url":"index.html"},{"revision":null,"url":"assets/index-889f7c65.css"},{"revision":null,"url":"assets/index-1a5180c1.js"},{"revision":"6c13dd0aef9e69c812be699bf094a789","url":"icons/icon-192.png"},{"revision":"f8658d19139a12373acfebf054e35608","url":"icons/icon-512.png"},{"revision":"850a2d8a1f2c5977ef53ffad468c0ec0","url":"manifest.webmanifest"}]);
+Re([{"revision":"1872c500de691dce40960bb85481de07","url":"registerSW.js"},{"revision":"d9fe3801b1fdc77665099aea9a2998d1","url":"index.html"},{"revision":null,"url":"assets/index-c3aa639d.js"},{"revision":null,"url":"assets/index-a62d0bdb.css"},{"revision":"6c13dd0aef9e69c812be699bf094a789","url":"icons/icon-192.png"},{"revision":"f8658d19139a12373acfebf054e35608","url":"icons/icon-512.png"},{"revision":"850a2d8a1f2c5977ef53ffad468c0ec0","url":"manifest.webmanifest"}]);
 ye();
 q(
   ({ url: s }) => s.origin === "https://tile.openstreetmap.org",

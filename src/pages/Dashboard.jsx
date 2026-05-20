@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { AlertCircle, CheckCircle2, Users, MapPin, TrendingUp, Clock, Shield, Eye } from 'lucide-react'
-import { dashboardStats, mockIncidents } from '../data/mockData'
+import { dashboardStats } from '../data/mockData'
 import { useApp } from '../contexts/AppContext'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -85,7 +85,7 @@ function DonutChart({ data }) {
 const TABS = ['Overview', 'Incidents', 'Resolutions']
 
 export default function Dashboard() {
-  const { alerts } = useApp()
+  const { alerts, incidents } = useApp()
   const [tab, setTab] = useState('Overview')
   const activeAlerts = alerts.filter((a) => a.status === 'active')
 
@@ -181,8 +181,8 @@ export default function Dashboard() {
 
       {tab === 'Incidents' && (
         <div className="space-y-3 animate-fade-up">
-          <p className="text-white/40 text-xs">{mockIncidents.length} total reports</p>
-          {mockIncidents.map((inc) => {
+          <p className="text-white/40 text-xs">{incidents.length} total reports</p>
+          {incidents.map((inc) => {
             const sev = severityConfig[inc.severity] || severityConfig.low
             return (
               <div key={inc.id} className="card p-4">

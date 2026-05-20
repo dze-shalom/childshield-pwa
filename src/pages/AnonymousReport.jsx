@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, X, Shield, CheckCircle2, Lock, AlertTriangle, User, Car, MapPin } from 'lucide-react'
+import { useApp } from '../contexts/AppContext'
 
 const INCIDENT_TYPES = [
   { value: 'suspicious_person', label: 'Suspicious Person', desc: 'Someone acting suspiciously around children', icon: User },
@@ -19,9 +20,22 @@ const AREAS = [
 
 export default function AnonymousReport() {
   const navigate = useNavigate()
+  const { addIncident } = useApp()
   const [submitted, setSubmitted] = useState(false)
   const [form, setForm] = useState({ type: '', description: '', location: '', severity: 'medium' })
   const update = (key, val) => setForm((f) => ({ ...f, [key]: val }))
+
+  const handleSubmit = () => {
+    const typeEntry = INCIDENT_TYPES.find((t) => t.value === form.type)
+    addIncident({
+      type: form.type,
+      typeLabel: typeEntry?.label || form.type,
+      description: form.description,
+      location: form.location,
+      severity: form.severity,
+    })
+    setSubmitted(true)
+  }
 
   if (submitted) return (
     <div className="page" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
@@ -96,7 +110,7 @@ export default function AnonymousReport() {
         value={form.description} onChange={(e) => update('description', e.target.value)} />
 
       <button className="btn-primary" style={{ opacity: (!form.type || !form.description || !form.location) ? 0.5 : 1 }}
-        onClick={() => { if (form.type && form.description && form.location) setSubmitted(true) }}>
+        onClick={() => { if (form.type && form.description && form.location) handleSubmit() }}>
         Submit Anonymous Report
       </button>
       <p style={{ textAlign: 'center', fontSize: 11, color: 'rgba(241,245,249,0.25)', marginTop: 10 }}>

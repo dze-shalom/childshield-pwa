@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Camera, MapPin, Phone, User, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, Camera, MapPin, Phone, User, AlertCircle, CheckCircle2, X } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 
 const CAMEROON_AREAS = [
@@ -16,13 +16,30 @@ export default function NewAlert() {
   const { addAlert } = useApp()
   const [step, setStep] = useState(1) // 1: child info, 2: location, 3: contact
   const [submitted, setSubmitted] = useState(false)
+  const [photoPreview, setPhotoPreview] = useState(null)
+  const fileInputRef = useRef(null)
   const [form, setForm] = useState({
     name: '', age: '', gender: '', description: '',
     lastSeen: '', customLocation: '', contact: '', createdBy: '',
-    lat: 4.1597, lng: 9.2306,
+    lat: 4.1597, lng: 9.2306, photo: null,
   })
 
   const update = (key, val) => setForm((f) => ({ ...f, [key]: val }))
+
+  const handlePhotoSelect = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    update('photo', file)
+    const reader = new FileReader()
+    reader.onload = (ev) => setPhotoPreview(ev.target.result)
+    reader.readAsDataURL(file)
+  }
+
+  const clearPhoto = () => {
+    setPhotoPreview(null)
+    update('photo', null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
 
   const handleSubmit = () => {
     const alert = {
@@ -71,12 +88,33 @@ export default function NewAlert() {
       {step === 1 && (
         <div className="space-y-4 animate-fade-up">
           <div className="card p-4 flex flex-col items-center gap-3 border-dashed border-white/10">
-            <div className="w-20 h-20 bg-white/5 rounded-2xl flex flex-col items-center justify-center gap-2">
-              <Camera size={24} className="text-white/30" />
-              <span className="text-white/30 text-xs">Photo</span>
-            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handlePhotoSelect}
+            />
+            {photoPreview ? (
+              <div className="relative">
+                <img src={photoPreview} alt="Child photo" className="w-24 h-24 rounded-2xl object-cover" />
+                <button
+                  onClick={clearPhoto}
+                  className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center"
+                >
+                  <X size={12} className="text-white" />
+                </button>
+              </div>
+            ) : (
+              <div className="w-20 h-20 bg-white/5 rounded-2xl flex flex-col items-center justify-center gap-2">
+                <Camera size={24} className="text-white/30" />
+                <span className="text-white/30 text-xs">Photo</span>
+              </div>
+            )}
             <p className="text-white/40 text-xs text-center">Upload child's photo (optional but recommended)</p>
-            <button className="btn-secondary text-sm py-2 px-4">Upload Photo</button>
+            <button className="btn-secondary text-sm py-2 px-4" onClick={() => fileInputRef.current?.click()}>
+              {photoPreview ? 'Change Photo' : 'Upload Photo'}
+            </button>
           </div>
 
           <div>

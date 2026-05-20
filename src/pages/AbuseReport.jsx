@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, X, Lock, Shield, Heart, Phone, MapPin, AlertTriangle, CheckCircle2, User, Users, BookOpen, Eye, FileText, Lightbulb, AlertOctagon, Building2, ShieldAlert } from 'lucide-react'
+import { useApp } from '../contexts/AppContext'
 
 const quickExit = () => { window.location.href = 'https://www.google.com' }
 
@@ -52,6 +53,7 @@ const UNDERSTAND_QA = [
 
 export default function AbuseReport() {
   const navigate = useNavigate()
+  const { addIncident } = useApp()
   const [step, setStep] = useState('landing')
   const [who, setWho] = useState('')
   const [incidents, setIncidents] = useState([])
@@ -61,6 +63,24 @@ export default function AbuseReport() {
   const [submitted, setSubmitted] = useState(false)
 
   const toggleIncident = (id) => setIncidents(p => p.includes(id) ? p.filter(i => i !== id) : [...p, id])
+
+  const handleSubmit = () => {
+    const incidentLabels = incidents.map(id => INCIDENT_TYPES.find(t => t.id === id)?.label).filter(Boolean)
+    const description = [
+      `Reporter: ${WHO_OPTIONS.find(o => o.id === who)?.label || who}`,
+      `Incident types: ${incidentLabels.join(', ')}`,
+      note && `Details: ${note}`,
+      perpetrator && `Perpetrator: ${perpetrator}`,
+    ].filter(Boolean).join(' | ')
+    addIncident({
+      type: 'sexual_abuse',
+      typeLabel: 'Sexual Abuse / Harassment',
+      description,
+      location,
+      severity: 'critical',
+    })
+    setSubmitted(true)
+  }
 
   if (submitted) return (
     <div className="page" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
@@ -292,7 +312,7 @@ export default function AbuseReport() {
 
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={() => setStep('what')} className="btn-secondary" style={{ flex: 1, fontSize: 12, padding: '10px' }}>Back</button>
-            <button onClick={() => { if (location) setSubmitted(true) }} style={{ flex: 2, background: location ? '#8B5CF6' : 'rgba(139,92,246,0.15)', border: 'none', borderRadius: 12, padding: '10px', color: location ? '#fff' : 'rgba(139,92,246,0.4)', fontWeight: 700, fontSize: 13, cursor: location ? 'pointer' : 'default' }}>
+            <button onClick={() => { if (location) handleSubmit() }} style={{ flex: 2, background: location ? '#8B5CF6' : 'rgba(139,92,246,0.15)', border: 'none', borderRadius: 12, padding: '10px', color: location ? '#fff' : 'rgba(139,92,246,0.4)', fontWeight: 700, fontSize: 13, cursor: location ? 'pointer' : 'default' }}>
               Submit Confidential Report
             </button>
           </div>

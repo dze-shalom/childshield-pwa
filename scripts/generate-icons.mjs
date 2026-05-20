@@ -21,49 +21,38 @@ function chunk(type, data) {
 }
 
 function makePNG(sz) {
-  const BG  = [8,   14,  26]   // #080E1A  dark navy
-  const RED = [239, 68,  68]   // #EF4444  brand red
-  const WHT = [255, 255, 255]  // white
+  // Bright red background + white shield = visible on any homescreen
+  const BG  = [220, 38,  38]   // #DC2626  vivid red background
+  const WHT = [255, 255, 255]  // white shield
+  const LRD = [239, 100, 100]  // lighter red for inner detail
 
   const raw = Buffer.alloc((sz * 3 + 1) * sz)
   const cx = sz / 2, cy = sz / 2
 
-  // Shield shape: defined as normalised polygon (0..1 coords), centered
-  // Points: top-centre arc, sides taper, bottom point
   function inShield(x, y) {
-    const nx = (x - cx) / (sz * 0.38)   // normalise to -1..1
-    const ny = (y - cy) / (sz * 0.42)
-    // Shield top: semicircle above centre
-    if (ny < -0.05) {
-      return nx * nx + ny * ny < 1
-    }
-    // Shield body: tapered rectangle
-    const taper = 1 - ny * 0.6
-    if (ny < 0.75) return Math.abs(nx) < taper
-    // Bottom point
-    return Math.abs(nx) < (1 - ny) * 2.2
+    const nx = (x - cx) / (sz * 0.40)
+    const ny = (y - cy) / (sz * 0.44)
+    if (ny < -0.05) return nx * nx + ny * ny < 1
+    const taper = 1 - ny * 0.55
+    if (ny < 0.78) return Math.abs(nx) < taper
+    return Math.abs(nx) < (1 - ny) * 2.4
   }
 
-  // Inner shield cutout (hollow effect)
-  function inInner(x, y) {
-    const nx = (x - cx) / (sz * 0.26)
+  function inInnerShield(x, y) {
+    const nx = (x - cx) / (sz * 0.27)
     const ny = (y - cy) / (sz * 0.30)
     if (ny < -0.05) return nx * nx + ny * ny < 1
-    const taper = 1 - ny * 0.6
-    if (ny < 0.75) return Math.abs(nx) < taper
-    return Math.abs(nx) < (1 - ny) * 2.2
+    const taper = 1 - ny * 0.55
+    if (ny < 0.78) return Math.abs(nx) < taper
+    return Math.abs(nx) < (1 - ny) * 2.4
   }
 
   for (let y = 0; y < sz; y++) {
-    raw[y * (sz * 3 + 1)] = 0  // filter byte
+    raw[y * (sz * 3 + 1)] = 0
     for (let x = 0; x < sz; x++) {
       let col = BG
-      if (inShield(x, y)) col = RED
-      if (inInner(x, y))  col = WHT
-      // "C" letter: white bar across inner shield centre
-      const nx = (x - cx) / (sz * 0.14)
-      const ny = (y - cy) / (sz * 0.10)
-      if (nx * nx + ny * ny < 1 && nx < 0.1) col = RED  // "C" cutout
+      if (inShield(x, y))      col = WHT
+      if (inInnerShield(x, y)) col = LRD  // subtle inner depth
       const p = y * (sz * 3 + 1) + 1 + x * 3
       raw[p] = col[0]; raw[p + 1] = col[1]; raw[p + 2] = col[2]
     }

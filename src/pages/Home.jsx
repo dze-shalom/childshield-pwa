@@ -3,6 +3,7 @@ import { Bell, Shield, AlertCircle, CheckCircle2, Users, Clock, MessageSquare, A
 import { useApp } from '../contexts/AppContext'
 import AlertCard from '../components/AlertCard'
 import NotificationBanner from '../components/NotificationBanner'
+import InstallApp from '../components/InstallApp'
 import { dashboardStats } from '../data/mockData'
 
 export default function Home() {
@@ -34,6 +35,7 @@ export default function Home() {
         </div>
       </div>
 
+      <InstallApp />
       <NotificationBanner />
 
       <Link to="/alert/new" style={{ display: 'block', marginBottom: 16, textDecoration: 'none' }}>

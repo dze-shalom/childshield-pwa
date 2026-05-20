@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { Home, MapPin, AlertTriangle, LayoutDashboard, LifeBuoy, Shield, AlertCircle } from 'lucide-react'
+import InstallApp from './InstallApp'
 
 const navItems = [
   { to: '/', icon: Home, label: 'Home' },
@@ -48,6 +49,11 @@ export default function BottomNav() {
               )}
             </NavLink>
           ))}
+        </div>
+
+        {/* Install app */}
+        <div className="px-3 pt-2 flex-shrink-0">
+          <InstallApp />
         </div>
 
         {/* Quick alert button */}

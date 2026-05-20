@@ -16,6 +16,7 @@ export default function NewAlert() {
   const { addAlert } = useApp()
   const [step, setStep] = useState(1) // 1: child info, 2: location, 3: contact
   const [submitted, setSubmitted] = useState(false)
+  const [submittedId, setSubmittedId] = useState(null)
   const [photoPreview, setPhotoPreview] = useState(null)
   const fileInputRef = useRef(null)
   const [form, setForm] = useState({
@@ -51,18 +52,34 @@ export default function NewAlert() {
       lastSeenTime: new Date().toISOString(),
     }
     const newAlert = await addAlert(alertData)
+    setSubmittedId(newAlert.id)
     setSubmitted(true)
-    setTimeout(() => navigate(`/alert/${newAlert.id}`), 2000)
   }
 
   if (submitted) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center">
-        <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mb-6 animate-bounce">
+      <div className="page flex flex-col items-center justify-center text-center">
+        <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mb-5">
           <CheckCircle2 size={40} className="text-emerald-400" />
         </div>
         <h2 className="font-syne font-bold text-white text-2xl mb-2">Alert Sent!</h2>
-        <p className="text-white/50 text-sm">Community notified. WhatsApp share link ready. Redirecting to alert page...</p>
+        <p className="text-white/50 text-sm mb-8 max-w-xs">
+          The community has been notified. Share on WhatsApp to reach even more people.
+        </p>
+        <div className="w-full max-w-xs space-y-3">
+          <button
+            className="btn-primary w-full"
+            onClick={() => navigate(`/alert/${submittedId}`)}
+          >
+            View Alert &amp; Share on WhatsApp
+          </button>
+          <button
+            className="btn-secondary w-full"
+            onClick={() => navigate('/')}
+          >
+            Back to Home
+          </button>
+        </div>
       </div>
     )
   }

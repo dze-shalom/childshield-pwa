@@ -5,6 +5,7 @@ import AlertCard from '../components/AlertCard'
 import NotificationBanner from '../components/NotificationBanner'
 import InstallApp from '../components/InstallApp'
 import LanguageSwitcher from '../components/LanguageSwitcher'
+import { Globe } from 'lucide-react'
 import { dashboardStats } from '../data/mockData'
 import { t } from '../lib/i18n'
 
@@ -27,10 +28,6 @@ export default function Home() {
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {/* Language switcher — mobile only (desktop uses sidebar) */}
-          <div className="md:hidden">
-            <LanguageSwitcher />
-          </div>
           <div style={{ position: 'relative' }}>
             <button style={{ width: 38, height: 38, background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
               <Bell size={17} color="rgba(241,245,249,0.5)" />
@@ -46,6 +43,13 @@ export default function Home() {
 
       <InstallApp />
       <NotificationBanner />
+
+      {/* Language selector — clearly labelled, always visible */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: '10px 14px' }}>
+        <Globe size={14} color="rgba(241,245,249,0.45)" />
+        <span style={{ fontSize: 12, color: 'rgba(241,245,249,0.45)', fontWeight: 600, flex: 1 }}>Language</span>
+        <LanguageSwitcher />
+      </div>
 
       {/* Report Missing Child CTA */}
       <Link to="/alert/new" style={{ display: 'block', marginBottom: 16, textDecoration: 'none' }}>

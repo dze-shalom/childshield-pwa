@@ -1,89 +1,99 @@
 import { useState, useEffect } from 'react'
-import { Download, Share, X } from 'lucide-react'
+import { Download, Share, X, Smartphone } from 'lucide-react'
+
+function isIOS() {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent) && !('MSStream' in window)
+}
+function isAndroid() {
+  return /android/i.test(navigator.userAgent)
+}
+function isStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true
+}
 
 export default function InstallApp() {
-  const [prompt, setPrompt] = useState(null)       // Chrome/Android/Edge install event
-  const [isIOS, setIsIOS] = useState(false)
-  const [installed, setInstalled] = useState(false)
+  const [prompt, setPrompt] = useState(null)
+  const [platform, setPlatform] = useState(null) // 'ios' | 'android' | 'desktop' | null
+  const [showFallback, setShowFallback] = useState(false)
   const [dismissed, setDismissed] = useState(false)
-  const [showIOSSteps, setShowIOSSteps] = useState(false)
+  const [showSteps, setShowSteps] = useState(false)
 
   useEffect(() => {
-    // Already running as installed PWA — hide banner
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setInstalled(true)
-      return
-    }
+    if (isStandalone()) return // already installed
 
-    // iOS detection (Safari on iPhone/iPad)
-    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !('MSStream' in window)
-    setIsIOS(ios)
+    if (isIOS()) { setPlatform('ios'); return }
+    if (isAndroid()) setPlatform('android')
+    else setPlatform('desktop')
 
-    // Chrome / Edge / Android — catch the install prompt
+    // Capture the install prompt (Chrome/Edge/Android)
     const handler = (e) => {
       e.preventDefault()
       setPrompt(e)
     }
     window.addEventListener('beforeinstallprompt', handler)
-    window.addEventListener('appinstalled', () => setInstalled(true))
-    return () => window.removeEventListener('beforeinstallprompt', handler)
+    window.addEventListener('appinstalled', () => setDismissed(true))
+
+    // If on Android and prompt never fires within 4s, show manual instructions
+    const timer = setTimeout(() => {
+      setShowFallback(true)
+    }, 4000)
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler)
+      clearTimeout(timer)
+    }
   }, [])
 
   const handleInstall = async () => {
     if (!prompt) return
     prompt.prompt()
     const { outcome } = await prompt.userChoice
-    if (outcome === 'accepted') setInstalled(true)
+    if (outcome === 'accepted') setDismissed(true)
     setPrompt(null)
   }
 
-  if (installed || dismissed) return null
+  if (dismissed || platform === null) return null
 
-  // iOS — show manual instructions
-  if (isIOS) return (
-    <div style={{
-      background: 'rgba(59,130,246,0.07)', border: '1px solid rgba(59,130,246,0.25)',
-      borderRadius: 14, padding: '12px 14px', marginBottom: 14,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+  // ── iOS: Share → Add to Home Screen ───────────────────────────────────────
+  if (platform === 'ios') return (
+    <div style={{ background: 'rgba(59,130,246,0.07)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: 14, padding: '12px 14px', marginBottom: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: showSteps ? 10 : 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ width: 30, height: 30, background: 'rgba(59,130,246,0.15)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Share size={14} color="#3B82F6" />
           </div>
           <p style={{ fontSize: 12, fontWeight: 700, color: '#F1F5F9', margin: 0 }}>Install on iPhone</p>
         </div>
-        <button onClick={() => setDismissed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(241,245,249,0.3)', padding: 4 }}>
-          <X size={14} />
-        </button>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          {!showSteps && (
+            <button onClick={() => setShowSteps(true)} style={{ background: '#3B82F6', border: 'none', borderRadius: 7, padding: '5px 10px', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+              How?
+            </button>
+          )}
+          <button onClick={() => setDismissed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(241,245,249,0.3)', padding: 2 }}>
+            <X size={14} />
+          </button>
+        </div>
       </div>
-      {!showIOSSteps ? (
-        <button
-          onClick={() => setShowIOSSteps(true)}
-          style={{ width: '100%', background: '#3B82F6', border: 'none', borderRadius: 9, padding: '8px', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-        >
-          Show me how
-        </button>
-      ) : (
-        <ol style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 4 }}>
+      {showSteps && (
+        <ol style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 5 }}>
           {[
-            'Tap the Share button at the bottom of Safari (box with arrow)',
+            'Open this page in Safari (not Chrome)',
+            'Tap the Share icon at the bottom of the screen',
             'Scroll down and tap "Add to Home Screen"',
-            'Tap "Add" in the top right corner',
-          ].map((step, i) => (
-            <li key={i} style={{ fontSize: 12, color: 'rgba(241,245,249,0.6)', lineHeight: 1.5 }}>{step}</li>
+            'Tap "Add" — done!',
+          ].map((s, i) => (
+            <li key={i} style={{ fontSize: 12, color: 'rgba(241,245,249,0.65)', lineHeight: 1.5 }}>{s}</li>
           ))}
         </ol>
       )}
     </div>
   )
 
-  // Chrome / Edge / Android — show install button when prompt is ready
+  // ── Chrome/Android with native prompt ────────────────────────────────────
   if (prompt) return (
-    <div style={{
-      background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.25)',
-      borderRadius: 14, padding: '12px 14px', marginBottom: 14,
-      display: 'flex', alignItems: 'center', gap: 12,
-    }}>
+    <div style={{ background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 14, padding: '12px 14px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
       <div style={{ width: 34, height: 34, background: 'rgba(16,185,129,0.15)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
         <Download size={16} color="#10B981" />
       </div>
@@ -92,16 +102,48 @@ export default function InstallApp() {
         <p style={{ fontSize: 11, color: 'rgba(241,245,249,0.5)', margin: 0 }}>Add to home screen for instant access</p>
       </div>
       <div style={{ display: 'flex', gap: 6 }}>
-        <button
-          onClick={handleInstall}
-          style={{ background: '#10B981', border: 'none', borderRadius: 8, padding: '7px 12px', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-        >
+        <button onClick={handleInstall} style={{ background: '#10B981', border: 'none', borderRadius: 8, padding: '7px 12px', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
           Install
         </button>
         <button onClick={() => setDismissed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(241,245,249,0.3)', padding: 4 }}>
           <X size={14} />
         </button>
       </div>
+    </div>
+  )
+
+  // ── Android fallback: Chrome menu instructions ────────────────────────────
+  if (platform === 'android' && showFallback) return (
+    <div style={{ background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 14, padding: '12px 14px', marginBottom: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: showSteps ? 10 : 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ width: 30, height: 30, background: 'rgba(16,185,129,0.15)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Smartphone size={14} color="#10B981" />
+          </div>
+          <p style={{ fontSize: 12, fontWeight: 700, color: '#F1F5F9', margin: 0 }}>Install on Android</p>
+        </div>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          {!showSteps && (
+            <button onClick={() => setShowSteps(true)} style={{ background: '#10B981', border: 'none', borderRadius: 7, padding: '5px 10px', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+              How?
+            </button>
+          )}
+          <button onClick={() => setDismissed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(241,245,249,0.3)', padding: 2 }}>
+            <X size={14} />
+          </button>
+        </div>
+      </div>
+      {showSteps && (
+        <ol style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 5 }}>
+          {[
+            'Tap the three dots ⋮ in the top-right corner of Chrome',
+            'Tap "Add to Home screen" or "Install app"',
+            'Tap "Add" to confirm',
+          ].map((s, i) => (
+            <li key={i} style={{ fontSize: 12, color: 'rgba(241,245,249,0.65)', lineHeight: 1.5 }}>{s}</li>
+          ))}
+        </ol>
+      )}
     </div>
   )
 

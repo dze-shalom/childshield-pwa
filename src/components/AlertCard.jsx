@@ -20,7 +20,7 @@ export default function AlertCard({ alert }) {
   const handleWhatsAppShare = (e) => {
     e.preventDefault()
     const url = `${window.location.origin}/alert/${alert.id}`
-    const message = `*MISSING CHILD ALERT*\nChildShield Cameroon\n\n*Name:* ${alert.name}\n*Age:* ${alert.age} years old (${alert.gender})\n*Last seen:* ${alert.lastSeen}\n*Description:* ${alert.description}\n\n*Contact:* ${alert.contact || 'See link below'}\n\nReport a sighting: ${url}\n\n_Please share widely — every second counts._\n_ChildShield — Community Child Safety_`
+    const message = `🚨 *MISSING CHILD ALERT*\n\n*ChildShield Cameroon*\n\n👤 *Name:* ${alert.name}\n🎂 *Age:* ${alert.age} years old (${alert.gender})\n📍 *Last seen:* ${alert.lastSeen}\n👗 *Description:* ${alert.description}\n\n📞 *Contact:* ${alert.contact || 'See link below'}\n\n🔗 Report a sighting:\n${url}\n\n_Please share widely. Every second counts._\n_ChildShield — Community Child Safety_`
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank')
   }
 

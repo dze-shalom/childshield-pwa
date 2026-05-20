@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { mockAlerts, mockIncidents } from '../data/mockData'
 import { supabase } from '../lib/supabase'
+import { alertMatchesWatchedAreas } from '../components/AreaWatcher'
 
 const AppContext = createContext(null)
 
@@ -101,14 +102,18 @@ export function AppProvider({ children }) {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'alerts' }, ({ new: row }) => {
         const alert = { ...toAlert(row), sightings: [] }
         setAlerts((prev) => [alert, ...prev.filter((a) => a.id !== alert.id)])
-        setNotifications((n) => n + 1)
-        if (Notification.permission === 'granted') {
-          new Notification('🚨 Missing Child Alert', {
-            body: `${alert.name} · ${alert.age} yrs · Last seen: ${alert.lastSeen}`,
-            icon: '/icons/icon-192.png',
-            tag: alert.id,
-            requireInteraction: true,
-          })
+
+        // Only notify if alert is in a watched area (or user watches all areas)
+        if (alertMatchesWatchedAreas(alert.lastSeen)) {
+          setNotifications((n) => n + 1)
+          if (Notification.permission === 'granted') {
+            new Notification('🚨 Missing Child Alert', {
+              body: `${alert.name} · ${alert.age} yrs · Last seen: ${alert.lastSeen}`,
+              icon: '/icons/icon-192.png',
+              tag: alert.id,
+              requireInteraction: true,
+            })
+          }
         }
       })
 

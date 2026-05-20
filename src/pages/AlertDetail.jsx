@@ -41,7 +41,7 @@ export default function AlertDetail() {
   const shareMessage = () => {
     const url = `${window.location.origin}/alert/${alert.id}`
     const time = alert.lastSeenTime ? format(new Date(alert.lastSeenTime), 'dd MMM yyyy, HH:mm') : 'Unknown time'
-    return `*MISSING CHILD ALERT*\nChildShield Cameroon\n\n*Name:* ${alert.name}\n*Age:* ${alert.age} years old (${alert.gender})\n*Last seen:* ${alert.lastSeen}\n*Time:* ${time}\n*Description:* ${alert.description}\n\n*Contact:* ${alert.contact}\n\nReport a sighting:\n${url}\n\n_Please share widely. Every second counts._\n_ChildShield — Community Child Safety_`
+    return `🚨 *MISSING CHILD ALERT*\n\n*ChildShield Cameroon*\n\n👤 *Name:* ${alert.name}\n🎂 *Age:* ${alert.age} years old (${alert.gender})\n📍 *Last seen:* ${alert.lastSeen}\n🕐 *Time:* ${time}\n👗 *Description:* ${alert.description}\n\n📞 *Contact:* ${alert.contact}\n\n🔗 Report sightings:\n${url}\n\n_Please share widely. Every second counts._\n_ChildShield — Community Child Safety_`
   }
 
   const handleShare = async () => {
@@ -339,7 +339,7 @@ export default function AlertDetail() {
           </p>
           <button
             onClick={() => {
-              const msg = `*CHILD FOUND — Thank You*\nChildShield Cameroon\n\n${alert.name} (${alert.age} years old) has been found safe.${foundMethod ? `\n\n${foundMethod}.` : ''}${foundMessage ? `\n\n"${foundMessage}"` : ''}\n\nThank you to every member of the ChildShield community who shared this alert. Your help made a real difference.\n\n_ChildShield — Community Child Safety_`
+              const msg = `✅ *CHILD FOUND — Thank You!*\n\n*ChildShield Cameroon*\n\nGreat news! *${alert.name}* (${alert.age} years old) has been found safe! 🙏${foundMethod ? `\n\n_${foundMethod}._` : ''}${foundMessage ? `\n\n"${foundMessage}"` : ''}\n\nThank you to every member of the ChildShield community who shared this alert. Your help made a real difference. ❤️\n\n_ChildShield — Community Child Safety_`
               window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank')
             }}
             style={{ width: '100%', background: '#128C7E', border: 'none', borderRadius: 12, padding: '12px', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', marginBottom: 10 }}

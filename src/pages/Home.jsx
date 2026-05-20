@@ -4,6 +4,7 @@ import { useApp } from '../contexts/AppContext'
 import AlertCard from '../components/AlertCard'
 import NotificationBanner from '../components/NotificationBanner'
 import InstallApp from '../components/InstallApp'
+import AreaWatcher from '../components/AreaWatcher'
 import { dashboardStats } from '../data/mockData'
 
 export default function Home() {
@@ -37,6 +38,7 @@ export default function Home() {
 
       <InstallApp />
       <NotificationBanner />
+      <AreaWatcher />
 
       <Link to="/alert/new" style={{ display: 'block', marginBottom: 16, textDecoration: 'none' }}>
         <div style={{ background: 'linear-gradient(135deg, #DC2626, #EF4444)', borderRadius: 20, padding: '18px 20px', position: 'relative', overflow: 'hidden', boxShadow: '0 8px 24px rgba(239,68,68,0.28)' }}>

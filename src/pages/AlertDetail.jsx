@@ -1,8 +1,16 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, MapPin, Clock, Share2, Eye, Plus, Phone, CheckCircle2, AlertCircle } from 'lucide-react'
+import { ArrowLeft, MapPin, Clock, Share2, Eye, Plus, Phone, CheckCircle2, AlertCircle, Heart } from 'lucide-react'
 import { formatDistanceToNow, format } from 'date-fns'
 import { useApp } from '../contexts/AppContext'
+
+const FOUND_METHODS = [
+  'Child came home on their own',
+  'Found by a community member',
+  'Police assisted in finding the child',
+  'Found at school or relative\'s home',
+  'Other',
+]
 
 export default function AlertDetail() {
   const { id } = useParams()
@@ -12,6 +20,12 @@ export default function AlertDetail() {
   const [showSightingForm, setShowSightingForm] = useState(false)
   const [sighting, setSighting] = useState({ location: '', description: '', reportedBy: 'Anonymous' })
   const [submitted, setSubmitted] = useState(false)
+
+  // Found flow
+  const [showFoundForm, setShowFoundForm] = useState(false)
+  const [foundMethod, setFoundMethod] = useState('')
+  const [foundMessage, setFoundMessage] = useState('')
+  const [foundConfirmed, setFoundConfirmed] = useState(false)
 
   if (!alert) return (
     <div className="page flex items-center justify-center">
@@ -235,11 +249,105 @@ export default function AlertDetail() {
         )}
       </section>
 
-      {/* Moderator: Resolve */}
-      {alert.status === 'active' && (user?.role === 'moderator' || user?.role === 'admin') && (
-        <button onClick={() => resolveAlert(alert.id)} className="w-full py-3 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 rounded-xl text-emerald-400 font-semibold text-sm transition-all">
-          ✅ Mark as Resolved — Child Found
-        </button>
+      {/* ── Found Flow ──────────────────────────────────────────────────── */}
+      {alert.status === 'active' && !foundConfirmed && (
+        <div className="card p-4 bg-emerald-500/5 border-emerald-500/20 mb-4">
+          {!showFoundForm ? (
+            <button
+              onClick={() => setShowFoundForm(true)}
+              className="w-full flex items-center justify-center gap-2 py-1"
+            >
+              <CheckCircle2 size={18} className="text-emerald-400" />
+              <span className="font-syne font-bold text-emerald-400 text-sm">
+                Child has been found? Let the community know
+              </span>
+            </button>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 mb-1">
+                <CheckCircle2 size={16} className="text-emerald-400" />
+                <h4 className="font-syne font-bold text-white text-sm">Report Child Found</h4>
+              </div>
+
+              <p className="text-white/50 text-xs">How was {alert.name} found?</p>
+              <div className="flex flex-col gap-2">
+                {FOUND_METHODS.map((method) => (
+                  <button
+                    key={method}
+                    onClick={() => setFoundMethod(method)}
+                    style={{
+                      background: foundMethod === method ? 'rgba(16,185,129,0.12)' : '#111827',
+                      border: `1px solid ${foundMethod === method ? 'rgba(16,185,129,0.4)' : 'rgba(255,255,255,0.06)'}`,
+                      borderRadius: 10, padding: '9px 12px',
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      cursor: 'pointer', textAlign: 'left',
+                    }}
+                  >
+                    <span style={{ fontSize: 12, color: foundMethod === method ? '#F1F5F9' : 'rgba(241,245,249,0.6)', fontWeight: foundMethod === method ? 600 : 400 }}>
+                      {method}
+                    </span>
+                    {foundMethod === method && <div style={{ width: 8, height: 8, background: '#10B981', borderRadius: '50%' }} />}
+                  </button>
+                ))}
+              </div>
+
+              <div>
+                <p className="text-white/50 text-xs mb-1.5">Message to the community (optional)</p>
+                <textarea
+                  className="input-field resize-none"
+                  rows={3}
+                  placeholder={`e.g. Thank you to everyone who shared this alert. ${alert.name} is safe and home now. God bless you all.`}
+                  value={foundMessage}
+                  onChange={(e) => setFoundMessage(e.target.value)}
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <button className="btn-secondary flex-1 py-2 text-sm" onClick={() => setShowFoundForm(false)}>Cancel</button>
+                <button
+                  disabled={!foundMethod}
+                  onClick={async () => {
+                    await resolveAlert(alert.id)
+                    setFoundConfirmed(true)
+                    setShowFoundForm(false)
+                  }}
+                  style={{
+                    flex: 2, background: foundMethod ? '#10B981' : 'rgba(16,185,129,0.15)',
+                    border: 'none', borderRadius: 12, padding: '10px',
+                    color: foundMethod ? '#fff' : 'rgba(16,185,129,0.4)',
+                    fontWeight: 700, fontSize: 13,
+                    cursor: foundMethod ? 'pointer' : 'default',
+                  }}
+                >
+                  ✅ Confirm Child Found
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Thank You Screen ─────────────────────────────────────────────── */}
+      {foundConfirmed && (
+        <div className="card p-5 mb-4 bg-emerald-500/8 border-emerald-500/25 text-center">
+          <div style={{ width: 56, height: 56, background: 'rgba(16,185,129,0.15)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+            <Heart size={26} className="text-emerald-400" />
+          </div>
+          <h3 className="font-syne font-bold text-white text-lg mb-1">{alert.name} is safe! 🙏</h3>
+          <p className="text-white/50 text-sm mb-4 leading-relaxed">
+            {foundMethod && `${foundMethod}. `}Thank the community by sharing this message on WhatsApp.
+          </p>
+          <button
+            onClick={() => {
+              const msg = `✅ *CHILD FOUND — Thank You!*\n\n*ChildShield Cameroon*\n\nGreat news! *${alert.name}* (${alert.age} years old) has been found safe! 🙏${foundMessage ? `\n\n"${foundMessage}"` : ''}\n\nThank you to every member of the ChildShield community who shared this alert. Your help made a real difference.\n\n_ChildShield — Community Child Safety_`
+              window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank')
+            }}
+            style={{ width: '100%', background: '#128C7E', border: 'none', borderRadius: 12, padding: '12px', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', marginBottom: 10 }}
+          >
+            Share Thank You on WhatsApp
+          </button>
+          <button className="btn-secondary w-full" onClick={() => navigate('/')}>Back to Home</button>
+        </div>
       )}
     </div>
   )

@@ -6,7 +6,7 @@
 
 ---
 
-## 🚀 Quick Start
+##  Quick Start
 
 ```bash
 # Install dependencies
@@ -26,35 +26,35 @@ Visit `http://localhost:5173` in your browser.
 
 ---
 
-## 🌟 Features
+##  Features
 
-### 🚨 Missing Child Alerts
+###  Missing Child Alerts
 - 3-step alert form: child info → last seen location → contact details
 - Real-time community notifications
 - Sightings feed — anyone can report where they saw the child
 - One-tap WhatsApp share with pre-formatted message
 
-### 👤 Anonymous Incident Reporting
+###  Anonymous Incident Reporting
 - No login required, no identity stored
 - Report suspicious persons, unsafe areas, harassment, attempted abductions
 - Quick Exit button — closes immediately for safety
 - Reports go to trained community moderators
 
-### 🗺️ Safe Zones Map
+###  Safe Zones Map
 - Leaflet-powered interactive map
 - Police stations, hospitals, NGOs, institutions marked
 - Active alert pins on the map
 - AI risk heatmap showing incident-dense zones
 - List view with contact details
 
-### 🆘 Get Help Now
+###  Get Help Now
 - All Cameroon emergency numbers (17, 16, 18)
 - Child Protection Hotline
 - Step-by-step guides: what to do if a child reports abuse, etc.
 - Quick Exit button for safety
 - ChildVoice WhatsApp bot integration
 
-### 📊 Admin Dashboard
+###  Admin Dashboard
 - Active alerts and KPI stats
 - Monthly alert trend chart
 - Incident type breakdown (donut chart)
@@ -63,7 +63,7 @@ Visit `http://localhost:5173` in your browser.
 
 ---
 
-## 🏗️ Architecture
+##  Architecture
 
 ```
 Frontend:     React 18 + Vite (PWA)
@@ -77,7 +77,7 @@ Hosting:      Vercel (free tier)
 
 ---
 
-## 🗄️ Supabase Setup
+##  Supabase Setup
 
 1. Create a project at [supabase.com](https://supabase.com)
 2. Copy your project URL and anon key
@@ -88,7 +88,7 @@ Tables needed: `alerts`, `sightings`, `incidents`, `users`
 
 ---
 
-## 🤖 ChildVoice WhatsApp Bot
+##  ChildVoice WhatsApp Bot
 
 The companion bot allows anyone to report via WhatsApp without downloading the app.
 
@@ -102,7 +102,7 @@ The companion bot allows anyone to report via WhatsApp without downloading the a
 
 ---
 
-## 👥 User Roles
+##  User Roles
 
 | Role | Access |
 |------|--------|

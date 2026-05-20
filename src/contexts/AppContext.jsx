@@ -1,7 +1,23 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { mockAlerts, mockIncidents } from '../data/mockData'
 import { supabase } from '../lib/supabase'
-import { alertMatchesWatchedAreas } from '../components/AreaWatcher'
+// Haversine distance between two GPS coordinates (km)
+function distanceKm(lat1, lng1, lat2, lng2) {
+  const R = 6371, toRad = (d) => d * Math.PI / 180
+  const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1)
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+function alertIsNearUser(alertLat, alertLng) {
+  try {
+    const raw = localStorage.getItem('childshield_location')
+    if (!raw || !alertLat || !alertLng) return true // no location data → notify always
+    const { lat, lng } = JSON.parse(raw)
+    return distanceKm(lat, lng, alertLat, alertLng) <= 30
+  } catch { return true }
+}
 
 const AppContext = createContext(null)
 
@@ -76,6 +92,16 @@ export function AppProvider({ children }) {
   const [notifications, setNotifications] = useState(0)
   const [loading, setLoading] = useState(CONFIGURED)
 
+  // Silently update user's GPS location on app open
+  useEffect(() => {
+    if (!('geolocation' in navigator)) return
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => localStorage.setItem('childshield_location',
+        JSON.stringify({ lat: coords.latitude, lng: coords.longitude })),
+      () => {} // permission denied or unavailable — fail silently
+    )
+  }, [])
+
   useEffect(() => {
     if (!CONFIGURED) {
       // Local dev — use mock data so the app works without Supabase credentials
@@ -103,8 +129,8 @@ export function AppProvider({ children }) {
         const alert = { ...toAlert(row), sightings: [] }
         setAlerts((prev) => [alert, ...prev.filter((a) => a.id !== alert.id)])
 
-        // Only notify if alert is in a watched area (or user watches all areas)
-        if (alertMatchesWatchedAreas(alert.lastSeen)) {
+        // Only notify if alert is within 30km of user's location (or location unknown)
+        if (alertIsNearUser(alert.lat, alert.lng)) {
           setNotifications((n) => n + 1)
           if (Notification.permission === 'granted') {
             new Notification('🚨 Missing Child Alert', {

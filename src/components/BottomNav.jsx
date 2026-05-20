@@ -1,13 +1,15 @@
 import { NavLink } from 'react-router-dom'
 import { Home, MapPin, AlertTriangle, LayoutDashboard, LifeBuoy, Shield, AlertCircle } from 'lucide-react'
 import InstallApp from './InstallApp'
+import LanguageSwitcher from './LanguageSwitcher'
+import { t } from '../lib/i18n'
 
-const navItems = [
-  { to: '/', icon: Home, label: 'Home' },
-  { to: '/map', icon: MapPin, label: 'Safe Zones' },
-  { to: '/report', icon: AlertTriangle, label: 'Report' },
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/help', icon: LifeBuoy, label: 'Get Help' },
+const navItems = () => [
+  { to: '/', icon: Home, label: t('nav', 'home') },
+  { to: '/map', icon: MapPin, label: t('nav', 'safeZones') },
+  { to: '/report', icon: AlertTriangle, label: t('nav', 'report') },
+  { to: '/dashboard', icon: LayoutDashboard, label: t('nav', 'dashboard') },
+  { to: '/help', icon: LifeBuoy, label: t('nav', 'getHelp') },
 ]
 
 export default function BottomNav() {
@@ -28,7 +30,7 @@ export default function BottomNav() {
 
         {/* Nav items */}
         <div className="flex flex-col gap-1 px-3 py-4 flex-1">
-          {navItems.map(({ to, icon: Icon, label }) => (
+          {navItems().map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
               to={to}
@@ -56,6 +58,11 @@ export default function BottomNav() {
           <InstallApp />
         </div>
 
+        {/* Language switcher */}
+        <div className="px-4 pb-3 flex-shrink-0">
+          <LanguageSwitcher />
+        </div>
+
         {/* Quick alert button */}
         <div className="px-3 pb-5 flex-shrink-0">
           <NavLink
@@ -63,7 +70,7 @@ export default function BottomNav() {
             className="flex items-center gap-3 px-3 py-3 rounded-xl bg-red-500 hover:bg-red-600 transition-colors w-full"
           >
             <AlertCircle size={18} className="text-white flex-shrink-0" />
-            <span className="text-sm font-outfit font-semibold text-white">Missing Child</span>
+            <span className="text-sm font-outfit font-semibold text-white">{t('nav', 'missing')}</span>
           </NavLink>
         </div>
       </nav>
@@ -71,7 +78,7 @@ export default function BottomNav() {
       {/* ── Mobile bottom bar ── */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0D1526]/95 backdrop-blur-xl border-t border-white/5 pb-safe">
         <div className="flex items-center justify-around px-2 py-2">
-          {navItems.map(({ to, icon: Icon, label }) => (
+          {navItems().map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
               to={to}

@@ -71,6 +71,18 @@ export default function Home() {
         </div>
       </Link>
 
+      {/* Found a Child — second major action */}
+      <Link to="/found-child" style={{ display: 'block', marginBottom: 16, textDecoration: 'none' }}>
+        <div style={{ background: 'linear-gradient(135deg, #B45309, #F59E0B)', borderRadius: 20, padding: '16px 20px', position: 'relative', overflow: 'hidden', boxShadow: '0 6px 20px rgba(245,158,11,0.25)' }}>
+          <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: 1.5, margin: '0 0 4px' }}>Found someone?</p>
+          <h2 style={{ fontWeight: 900, fontSize: 20, color: '#fff', margin: '0 0 3px', letterSpacing: -0.5 }}>I Found a Child</h2>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', margin: 0 }}>AI instantly matches &amp; contacts families</p>
+          <div style={{ position: 'absolute', right: 18, top: '50%', transform: 'translateY(-50%)', width: 48, height: 48, background: 'rgba(255,255,255,0.15)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Search size={24} color="#fff" />
+          </div>
+        </div>
+      </Link>
+
       {/* Stats */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
         {[
@@ -151,10 +163,9 @@ export default function Home() {
       </div>
       <div style={{ display: 'flex', gap: 10 }}>
         {[
-          { to: '/report',       icon: AlertTriangle, color: '#F59E0B', bg: 'rgba(245,158,11,0.12)',    label: t('home', 'reportIncident'), sub: t('home', 'suspiciousActivity'), cardBg: undefined },
-          { to: '/found-child',  icon: Search,        color: '#F59E0B', bg: 'rgba(245,158,11,0.12)',    label: 'Found a Child',             sub: 'AI matching',                   cardBg: 'rgba(245,158,11,0.05)' },
-          { to: '/abuse-report', icon: Lock,          color: '#8B5CF6', bg: 'rgba(139,92,246,0.15)',    label: t('home', 'safeReporting'),  sub: t('home', 'sexualAbuse'),        cardBg: 'rgba(139,92,246,0.06)' },
-          { to: '/help',         icon: LifeBuoy,      color: '#10B981', bg: 'rgba(16,185,129,0.12)',    label: t('nav', 'getHelp'),         sub: t('home', 'findSupport'),        cardBg: undefined },
+          { to: '/report',       icon: AlertTriangle, color: '#F59E0B', bg: 'rgba(245,158,11,0.12)',  label: t('home', 'reportIncident'), sub: t('home', 'suspiciousActivity'), cardBg: undefined },
+          { to: '/abuse-report', icon: Lock,          color: '#8B5CF6', bg: 'rgba(139,92,246,0.15)',  label: t('home', 'safeReporting'),  sub: t('home', 'sexualAbuse'),        cardBg: 'rgba(139,92,246,0.06)' },
+          { to: '/help',         icon: LifeBuoy,      color: '#10B981', bg: 'rgba(16,185,129,0.12)',  label: t('nav', 'getHelp'),         sub: t('home', 'findSupport'),        cardBg: undefined },
         ].map(({ to, icon: Icon, color, bg, label, sub, cardBg }) => (
           <Link key={to} to={to} style={{ flex: 1, textDecoration: 'none' }}>
             <div className="card" style={{ padding: 12, background: cardBg }}>

@@ -55,6 +55,7 @@ const toAlert = (row) => ({
   contact: row.contact,
   createdBy: row.created_by,
   createdAt: row.created_at,
+  resolvedAt: row.resolved_at || null,
   sightings: (row.sightings || []).map(toSighting),
 })
 
@@ -145,7 +146,9 @@ export function AppProvider({ children }) {
 
       // Alert status changed (e.g. resolved)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'alerts' }, ({ new: row }) => {
-        setAlerts((prev) => prev.map((a) => a.id === row.id ? { ...a, status: row.status } : a))
+        setAlerts((prev) => prev.map((a) =>
+          a.id === row.id ? { ...a, status: row.status, resolvedAt: row.resolved_at || a.resolvedAt } : a
+        ))
       })
 
       // New sighting added
@@ -264,13 +267,14 @@ export function AppProvider({ children }) {
   }
 
   const resolveAlert = async (alertId) => {
+    const resolvedAt = new Date().toISOString()
     if (!CONFIGURED) {
-      setAlerts((prev) => prev.map((a) => a.id === alertId ? { ...a, status: 'resolved' } : a))
+      setAlerts((prev) => prev.map((a) => a.id === alertId ? { ...a, status: 'resolved', resolvedAt } : a))
       return
     }
-    const { error } = await supabase.from('alerts').update({ status: 'resolved' }).eq('id', alertId)
+    const { error } = await supabase.from('alerts').update({ status: 'resolved', resolved_at: resolvedAt }).eq('id', alertId)
     if (error) throw error
-    setAlerts((prev) => prev.map((a) => a.id === alertId ? { ...a, status: 'resolved' } : a))
+    setAlerts((prev) => prev.map((a) => a.id === alertId ? { ...a, status: 'resolved', resolvedAt } : a))
   }
 
   const addFoundChild = async (found) => {

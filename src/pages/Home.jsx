@@ -13,7 +13,14 @@ export default function Home() {
   const { alerts, notifications } = useApp()
   const { t } = useLanguage()
   const activeAlerts = alerts.filter((a) => a.status === 'active')
-  const resolvedAlerts = alerts.filter((a) => a.status === 'resolved')
+
+  // Show resolved alerts only for 24 hours — then they fade to the Dashboard history
+  const cutoff = Date.now() - 24 * 60 * 60 * 1000
+  const resolvedAlerts = alerts.filter((a) => {
+    if (a.status !== 'resolved') return false
+    const stamp = a.resolvedAt || a.createdAt
+    return stamp ? new Date(stamp).getTime() > cutoff : false
+  })
 
   return (
     <div className="page">

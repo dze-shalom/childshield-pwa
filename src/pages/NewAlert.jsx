@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Camera, MapPin, Phone, User, AlertCircle, CheckCircle2, X } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
-import { t } from '../lib/i18n'
+import { useLanguage } from '../contexts/LanguageContext'
 
 const CAMEROON_AREAS = [
   'Buea Town, Buea', 'Molyko, Buea', 'Sandpit, Buea', 'Bonduma, Buea',
@@ -15,6 +15,7 @@ const CAMEROON_AREAS = [
 export default function NewAlert() {
   const navigate = useNavigate()
   const { addAlert } = useApp()
+  const { t } = useLanguage()
   const [step, setStep] = useState(1) // 1: child info, 2: location, 3: contact
   const [submitted, setSubmitted] = useState(false)
   const [submittedId, setSubmittedId] = useState(null)

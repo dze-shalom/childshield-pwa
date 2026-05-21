@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, MapPin, Clock, Share2, Eye, Plus, Phone, CheckCircle2, AlertCircle, Heart } from 'lucide-react'
 import { formatDistanceToNow, format } from 'date-fns'
 import { useApp } from '../contexts/AppContext'
-import { t } from '../lib/i18n'
+import { useLanguage } from '../contexts/LanguageContext'
 
 const FOUND_METHODS = [
   'Child came home on their own',
@@ -17,6 +17,7 @@ export default function AlertDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { alerts, addSighting, resolveAlert, user } = useApp()
+  const { t } = useLanguage()
   const alert = alerts.find((a) => a.id === id)
   const [showSightingForm, setShowSightingForm] = useState(false)
   const [sighting, setSighting] = useState({ location: '', description: '', reportedBy: 'Anonymous' })

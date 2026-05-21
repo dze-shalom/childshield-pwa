@@ -1,6 +1,6 @@
 import { useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, X, Shield, Phone, Lock, Building2, Users, ShieldAlert, MessageSquare, AlertOctagon, Heart } from 'lucide-react'
-import { t, tArr } from '../lib/i18n'
+import { useLanguage } from '../contexts/LanguageContext'
 
 const EMERGENCY = [
   { name: 'Police Emergency', number: '17', icon: ShieldAlert, color: '#3B82F6' },
@@ -22,6 +22,7 @@ const BORDERS = ['rgba(239,68,68,0.2)', 'rgba(236,72,153,0.2)', 'rgba(139,92,246
 
 export default function GetHelp() {
   const navigate = useNavigate()
+  const { t, tArr } = useLanguage()
   const WHAT_TO_DO = tArr('help', 'whatToDo')
 
   return (

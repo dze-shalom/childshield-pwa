@@ -2,17 +2,18 @@ import { NavLink } from 'react-router-dom'
 import { Home, MapPin, AlertTriangle, LayoutDashboard, LifeBuoy, Shield, AlertCircle } from 'lucide-react'
 import InstallApp from './InstallApp'
 import LanguageSwitcher from './LanguageSwitcher'
-import { t } from '../lib/i18n'
-
-const navItems = () => [
-  { to: '/', icon: Home, label: t('nav', 'home') },
-  { to: '/map', icon: MapPin, label: t('nav', 'safeZones') },
-  { to: '/report', icon: AlertTriangle, label: t('nav', 'report') },
-  { to: '/dashboard', icon: LayoutDashboard, label: t('nav', 'dashboard') },
-  { to: '/help', icon: LifeBuoy, label: t('nav', 'getHelp') },
-]
+import { useLanguage } from '../contexts/LanguageContext'
 
 export default function BottomNav() {
+  const { t } = useLanguage()
+  const navItems = [
+    { to: '/', icon: Home, label: t('nav', 'home') },
+    { to: '/map', icon: MapPin, label: t('nav', 'safeZones') },
+    { to: '/report', icon: AlertTriangle, label: t('nav', 'report') },
+    { to: '/dashboard', icon: LayoutDashboard, label: t('nav', 'dashboard') },
+    { to: '/help', icon: LifeBuoy, label: t('nav', 'getHelp') },
+  ]
+
   return (
     <>
       {/* ── Desktop sidebar ── */}

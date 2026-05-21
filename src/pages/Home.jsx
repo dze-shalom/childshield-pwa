@@ -7,10 +7,11 @@ import InstallApp from '../components/InstallApp'
 import LanguageSwitcher from '../components/LanguageSwitcher'
 import { Globe } from 'lucide-react'
 import { dashboardStats } from '../data/mockData'
-import { t } from '../lib/i18n'
+import { useLanguage } from '../contexts/LanguageContext'
 
 export default function Home() {
   const { alerts, notifications } = useApp()
+  const { t } = useLanguage()
   const activeAlerts = alerts.filter((a) => a.status === 'active')
   const resolvedAlerts = alerts.filter((a) => a.status === 'resolved')
 

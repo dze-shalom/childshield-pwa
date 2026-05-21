@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Download, Share, X, Smartphone } from 'lucide-react'
-import { t, tArr } from '../lib/i18n'
+import { useLanguage } from '../contexts/LanguageContext'
 
 const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) && !('MSStream' in window)
 const isAndroid = () => /android/i.test(navigator.userAgent)
@@ -9,6 +9,7 @@ const isStandalone = () =>
   window.navigator.standalone === true
 
 export default function InstallApp() {
+  const { t, tArr } = useLanguage()
   const [prompt, setPrompt] = useState(window.__pwaInstallPrompt || null)
   const [platform, setPlatform] = useState(null)
   const [showSteps, setShowSteps] = useState(false)

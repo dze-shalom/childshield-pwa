@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { MapPin, Clock, Eye, Share2, Wifi, MessageSquare } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
-import { t } from '../lib/i18n'
+import { useLanguage } from '../contexts/LanguageContext'
 
 const statusConfig = {
   active: { label: 'MISSING', className: 'badge-active', dot: true },
@@ -14,6 +14,7 @@ const SourceTag = ({ source }) => source === 'bot'
   : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: 99, padding: '1px 7px', fontSize: 9, fontWeight: 700, color: '#3B82F6' }}><Wifi size={7} /> App</span>
 
 export default function AlertCard({ alert }) {
+  const { t } = useLanguage()
   const status = statusConfig[alert.status] || statusConfig.active
   const timeAgo = formatDistanceToNow(new Date(alert.createdAt), { addSuffix: true })
   const initials = alert.name.split(' ').map((n) => n[0]).join('').slice(0, 2)

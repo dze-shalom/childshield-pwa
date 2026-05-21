@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, X, Shield, CheckCircle2, Lock, AlertTriangle, User, Car, MapPin } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
-import { t } from '../lib/i18n'
+import { useLanguage } from '../contexts/LanguageContext'
 
 const INCIDENT_TYPES = [
   { value: 'suspicious_person', label: 'Suspicious Person', desc: 'Someone acting suspiciously around children', icon: User },
@@ -22,6 +22,7 @@ const AREAS = [
 export default function AnonymousReport() {
   const navigate = useNavigate()
   const { addIncident } = useApp()
+  const { t } = useLanguage()
   const [submitted, setSubmitted] = useState(false)
   const [form, setForm] = useState({ type: '', description: '', location: '', severity: 'medium' })
   const update = (key, val) => setForm((f) => ({ ...f, [key]: val }))

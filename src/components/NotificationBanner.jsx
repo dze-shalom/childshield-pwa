@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Bell, X } from 'lucide-react'
-import { t } from '../lib/i18n'
+import { useLanguage } from '../contexts/LanguageContext'
 
 export default function NotificationBanner() {
+  const { t } = useLanguage()
   const [status, setStatus] = useState(null) // null | 'prompt' | 'granted' | 'denied'
   const [dismissed, setDismissed] = useState(false)
 

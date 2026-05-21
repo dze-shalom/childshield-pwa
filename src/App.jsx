@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import { AppProvider } from './contexts/AppContext'
+import { LanguageProvider } from './contexts/LanguageContext'
 import BottomNav from './components/BottomNav'
 import Home from './pages/Home'
 import NewAlert from './pages/NewAlert'
@@ -13,6 +14,7 @@ import Dashboard from './pages/Dashboard'
 export default function App() {
   return (
     <AppProvider>
+      <LanguageProvider>
       <div className="min-h-screen bg-[#080E1A] flex">
         <BottomNav />
         <main className="flex-1 md:ml-52 min-w-0">
@@ -30,6 +32,7 @@ export default function App() {
           </div>
         </main>
       </div>
+      </LanguageProvider>
     </AppProvider>
   )
 }

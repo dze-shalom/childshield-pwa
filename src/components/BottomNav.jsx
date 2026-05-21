@@ -31,7 +31,7 @@ export default function BottomNav() {
 
         {/* Nav items */}
         <div className="flex flex-col gap-1 px-3 py-4 flex-1">
-          {navItems().map(({ to, icon: Icon, label }) => (
+          {navItems.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
               to={to}
@@ -79,7 +79,7 @@ export default function BottomNav() {
       {/* ── Mobile bottom bar ── */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0D1526]/95 backdrop-blur-xl border-t border-white/5 pb-safe">
         <div className="flex items-center justify-around px-2 py-2">
-          {navItems().map(({ to, icon: Icon, label }) => (
+          {navItems.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
               to={to}

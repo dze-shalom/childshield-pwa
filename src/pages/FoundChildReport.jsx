@@ -1,36 +1,34 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Camera, Phone, CheckCircle2, X, Search, AlertCircle, User } from 'lucide-react'
+import { ArrowLeft, Camera, Phone, CheckCircle2, X, User, AlertCircle } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
-import { useLanguage } from '../contexts/LanguageContext'
 
 const AREAS = [
   'Buea Town, Buea', 'Molyko, Buea', 'Sandpit, Buea', 'Bonduma, Buea',
   'Mile 4, Limbe', 'Down Beach, Limbe', 'Bota, Limbe', 'Mile 2, Limbe',
   'Bonaberi, Douala', 'Akwa, Douala', 'Bonanjo, Douala', 'Makepe, Douala',
-  'Biyem-Assi, Yaoundé', 'Mvan, Yaoundé', 'Mendong, Yaoundé',
-  'Other',
+  'Biyem-Assi, Yaoundé', 'Mvan, Yaoundé', 'Mendong, Yaoundé', 'Other',
 ]
 
 const CONFIDENCE_CONFIG = {
-  high:   { label: 'High Match',   color: '#10B981', bg: 'rgba(16,185,129,0.1)',  border: 'rgba(16,185,129,0.3)' },
-  medium: { label: 'Possible Match', color: '#F59E0B', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.3)' },
-  low:    { label: 'Weak Match',   color: '#6B7280', bg: 'rgba(107,114,128,0.1)', border: 'rgba(107,114,128,0.2)' },
+  high:   { label: 'Strong Match',    color: '#10B981', bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.3)' },
+  medium: { label: 'Possible Match',  color: '#F59E0B', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.3)' },
+  low:    { label: 'Weak Match',      color: '#6B7280', bg: 'rgba(107,114,128,0.08)', border: 'rgba(107,114,128,0.2)' },
 }
 
 export default function FoundChildReport() {
   const navigate = useNavigate()
   const { addFoundChild } = useApp()
-  const { t } = useLanguage()
 
-  const [step, setStep] = useState(1) // 1: describe, 2: location+contact, 3: results
-  const [matching, setMatching] = useState(false)
+  const [step, setStep] = useState(1)
+  const [loading, setLoading] = useState(false)
   const [matches, setMatches] = useState(null)
+  const [notified, setNotified] = useState([])
   const [photoPreview, setPhotoPreview] = useState(null)
-  const fileInputRef = useRef(null)
 
   const [form, setForm] = useState({
-    description: '', ageEstimate: '', gender: '', location: '', contact: '', photo: null,
+    description: '', ageEstimate: '', gender: '',
+    location: '', currentLocation: '', contact: '', photo: null,
   })
   const update = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
@@ -42,11 +40,11 @@ export default function FoundChildReport() {
     reader.readAsDataURL(file)
   }
 
+  // Submit → save → auto-match → auto-notify parents
   const handleSubmit = async () => {
     setStep(3)
-    setMatching(true)
+    setLoading(true)
 
-    // Save to Supabase via AppContext
     await addFoundChild({
       description: form.description,
       ageEstimate: form.ageEstimate,
@@ -56,7 +54,6 @@ export default function FoundChildReport() {
       photo: form.photo,
     })
 
-    // Run AI matching via Vercel function
     try {
       const res = await fetch('/api/match', {
         method: 'POST',
@@ -65,19 +62,26 @@ export default function FoundChildReport() {
       })
       const data = await res.json()
       setMatches(data.matches || [])
+      setNotified(data.notified || [])
     } catch {
       setMatches([])
     } finally {
-      setMatching(false)
+      setLoading(false)
     }
   }
+
+  const canStep2 = !!form.description
+  const canSubmit = !!form.location && !!form.contact
 
   return (
     <div className="page">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => step === 1 ? navigate(-1) : setStep(s => s - 1)}
-          className="w-9 h-9 bg-white/5 rounded-xl flex items-center justify-center">
+        <button
+          onClick={() => step === 1 ? navigate(-1) : step === 2 ? setStep(1) : null}
+          className="w-9 h-9 bg-white/5 rounded-xl flex items-center justify-center"
+          style={{ opacity: step === 3 ? 0.3 : 1, pointerEvents: step === 3 ? 'none' : 'auto' }}
+        >
           <ArrowLeft size={18} className="text-white/70" />
         </button>
         <div>
@@ -101,13 +105,13 @@ export default function FoundChildReport() {
           <div className="card p-4 bg-amber-500/5 border-amber-500/20 flex gap-3">
             <AlertCircle size={16} className="text-amber-400 flex-shrink-0 mt-0.5" />
             <p className="text-white/60 text-sm leading-relaxed">
-              Describe the child as accurately as possible. Our system will automatically search for matching missing child alerts.
+              Describe the child as accurately as possible. Once you submit, our system will automatically search and contact families.
             </p>
           </div>
 
           {/* Photo */}
           <div className="card p-4 flex flex-col items-center gap-3 border-dashed border-white/10">
-            <input ref={fileInputRef} id="found-photo" type="file" accept="image/*" className="sr-only" onChange={handlePhoto} />
+            <input id="found-photo" type="file" accept="image/*" className="sr-only" onChange={handlePhoto} />
             {photoPreview
               ? <div className="relative">
                   <img src={photoPreview} alt="Found child" className="w-24 h-24 rounded-2xl object-cover" />
@@ -121,27 +125,25 @@ export default function FoundChildReport() {
                   <span className="text-white/30 text-xs">Photo</span>
                 </label>
             }
-            <p className="text-white/40 text-xs text-center">Photo of the child helps greatly (optional)</p>
+            <p className="text-white/40 text-xs text-center">Photo helps greatly (optional)</p>
             <label htmlFor="found-photo" className="btn-secondary text-sm py-2 px-4 cursor-pointer">
               {photoPreview ? 'Change Photo' : 'Add Photo'}
             </label>
           </div>
 
-          {/* Description */}
           <div>
             <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">Describe the child *</label>
             <textarea className="input-field resize-none" rows={4}
-              placeholder="What are they wearing? Physical features, hair, any marks or accessories. The more detail, the better the match."
+              placeholder="What are they wearing? Age appearance, hair, any marks, what they are saying, school uniform, bag..."
               value={form.description} onChange={e => update('description', e.target.value)} />
           </div>
 
-          {/* Age & Gender */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">Approx. Age</label>
               <select className="input-field" value={form.ageEstimate} onChange={e => update('ageEstimate', e.target.value)}>
                 <option value="">Unknown</option>
-                <option value="under 5">Under 5 years</option>
+                <option value="under 5">Under 5</option>
                 <option value="5-8">5–8 years</option>
                 <option value="9-12">9–12 years</option>
                 <option value="13-17">13–17 years</option>
@@ -157,9 +159,10 @@ export default function FoundChildReport() {
             </div>
           </div>
 
-          <button className="btn-primary w-full" disabled={!form.description} onClick={() => setStep(2)}
-            style={{ background: '#F59E0B', opacity: form.description ? 1 : 0.5 }}>
-            Next: Location & Contact →
+          <button className="btn-primary w-full" disabled={!canStep2}
+            style={{ background: '#F59E0B', opacity: canStep2 ? 1 : 0.4 }}
+            onClick={() => setStep(2)}>
+            Next: Where &amp; How to Reach You →
           </button>
         </div>
       )}
@@ -178,7 +181,7 @@ export default function FoundChildReport() {
           <div>
             <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">Where is the child right now?</label>
             <textarea className="input-field resize-none" rows={2}
-              placeholder="e.g. I have the child with me, child is at Molyko Police Station, child is at Buea Hospital..."
+              placeholder="e.g. With me at Molyko Total station / At Buea Police Station / At the hospital..."
               value={form.currentLocation} onChange={e => update('currentLocation', e.target.value)} />
           </div>
 
@@ -189,107 +192,125 @@ export default function FoundChildReport() {
               <input className="input-field pl-9" placeholder="+237 6XX XXX XXX" type="tel"
                 value={form.contact} onChange={e => update('contact', e.target.value)} />
             </div>
-            <p className="text-white/30 text-xs mt-1.5">Parents of missing children will be able to reach you directly.</p>
-          </div>
-
-          <div className="card p-4 bg-amber-500/5 border-amber-500/20">
-            <p className="text-white/50 text-xs leading-relaxed">
-              After you submit, our AI will search through active missing child alerts for a match. If found, you will see the parent's contact details immediately.
+            <p className="text-white/30 text-xs mt-1.5">
+              If we find a match, the child's family will receive a WhatsApp with your number — and you'll see their contact here too.
             </p>
           </div>
 
           <div className="flex gap-3">
             <button className="btn-secondary flex-1" onClick={() => setStep(1)}>← Back</button>
             <button
-              disabled={!form.location || !form.contact}
+              disabled={!canSubmit}
               onClick={handleSubmit}
-              style={{ flex: 2, background: (form.location && form.contact) ? '#F59E0B' : 'rgba(245,158,11,0.2)', border: 'none', borderRadius: 12, padding: '12px', color: (form.location && form.contact) ? '#fff' : 'rgba(245,158,11,0.4)', fontWeight: 700, fontSize: 14, cursor: (form.location && form.contact) ? 'pointer' : 'default' }}>
-              🔍 Search for Matches
+              style={{
+                flex: 2, background: canSubmit ? '#F59E0B' : 'rgba(245,158,11,0.2)',
+                border: 'none', borderRadius: 12, padding: '12px',
+                color: canSubmit ? '#fff' : 'rgba(245,158,11,0.4)',
+                fontWeight: 700, fontSize: 14,
+                cursor: canSubmit ? 'pointer' : 'default',
+              }}>
+              Submit Report
             </button>
           </div>
         </div>
       )}
 
-      {/* ── Step 3: Results ── */}
+      {/* ── Step 3: Auto-results ── */}
       {step === 3 && (
         <div>
-          {matching ? (
-            <div className="flex flex-col items-center justify-center py-16 gap-4">
-              <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(245,158,11,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Search size={24} className="text-amber-400" />
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-5">
+              <div style={{
+                width: 64, height: 64, borderRadius: '50%',
+                background: 'rgba(245,158,11,0.12)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <span style={{ fontSize: 28 }}>🔍</span>
               </div>
-              <p className="font-syne font-bold text-white text-lg">Searching alerts...</p>
-              <p className="text-white/40 text-sm text-center max-w-xs">
-                Our AI is comparing your description against all active missing child alerts in Cameroon.
-              </p>
+              <div className="text-center">
+                <p className="font-syne font-bold text-white text-lg mb-2">Searching active alerts...</p>
+                <p className="text-white/40 text-sm max-w-xs leading-relaxed">
+                  Our AI is comparing your description against every active missing child alert. Families will be notified automatically if we find a match.
+                </p>
+              </div>
             </div>
-          ) : matches !== null && (
+          ) : (
             <div>
               {/* Report confirmed */}
-              <div className="card p-4 bg-emerald-500/8 border-emerald-500/20 flex gap-3 mb-6">
+              <div className="card p-4 bg-emerald-500/5 border-emerald-500/20 flex gap-3 mb-5">
                 <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-syne font-bold text-white text-sm">Report submitted</p>
-                  <p className="text-white/50 text-xs mt-0.5">Your contact number has been saved. If a new alert matches, you'll be notified.</p>
+                  <p className="text-white/50 text-xs mt-0.5 leading-relaxed">
+                    Your report is saved. {notified.length > 0
+                      ? `We sent a WhatsApp alert to the family of ${notified.join(', ')}.`
+                      : 'If a matching alert is posted later, families will be notified automatically.'}
+                  </p>
                 </div>
               </div>
 
-              {matches.length === 0 ? (
+              {matches?.length === 0 ? (
                 <div className="card p-8 text-center">
                   <User size={32} className="text-white/20 mx-auto mb-3" />
-                  <p className="font-syne font-bold text-white text-base mb-2">No matches found yet</p>
-                  <p className="text-white/40 text-sm leading-relaxed">
-                    No active alert matches this description right now. Your report is saved — if a matching alert is posted later, moderators will be notified.
+                  <p className="font-syne font-bold text-white text-base mb-2">No active alerts match right now</p>
+                  <p className="text-white/40 text-sm leading-relaxed mb-4">
+                    Your report is saved. If a parent posts a missing alert matching this child later, they will be notified of your report.
                   </p>
-                  <p className="text-white/50 text-sm mt-4 font-semibold">In the meantime, please also call:</p>
-                  <a href="tel:17" className="btn-primary mt-3 flex items-center justify-center gap-2 text-sm" style={{ textDecoration: 'none' }}>
-                    <Phone size={14} /> Police — 17
+                  <p className="text-amber-400 text-sm font-semibold mb-3">Please also call the police:</p>
+                  <a href="tel:17" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#3B82F6', borderRadius: 10, padding: '10px', color: '#fff', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
+                    <Phone size={14} /> Call Police — 17
                   </a>
                 </div>
               ) : (
                 <div>
                   <p className="text-white/50 text-xs uppercase tracking-widest font-semibold mb-3">
-                    {matches.length} potential match{matches.length > 1 ? 'es' : ''} found
+                    {matches.length} possible match{matches.length > 1 ? 'es' : ''} found
                   </p>
                   <div className="space-y-4">
                     {matches.map((m, i) => {
                       const cfg = CONFIDENCE_CONFIG[m.level] || CONFIDENCE_CONFIG.low
+                      const wasNotified = notified.includes(m.alert.name)
                       return (
                         <div key={i} className="card p-4" style={{ background: cfg.bg, borderColor: cfg.border }}>
-                          {/* Confidence badge */}
                           <div className="flex items-center justify-between mb-3">
-                            <span style={{ fontSize: 10, fontWeight: 700, color: cfg.color, background: cfg.color + '20', borderRadius: 99, padding: '3px 10px', textTransform: 'uppercase', letterSpacing: 1 }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, color: cfg.color, background: cfg.color + '25', borderRadius: 99, padding: '3px 10px', textTransform: 'uppercase', letterSpacing: 1 }}>
                               {cfg.label} — {m.confidence}%
                             </span>
+                            {wasNotified && (
+                              <span style={{ fontSize: 10, fontWeight: 700, color: '#10B981', background: 'rgba(16,185,129,0.15)', borderRadius: 99, padding: '3px 10px' }}>
+                                ✓ Family notified
+                              </span>
+                            )}
                           </div>
 
-                          {/* Child info */}
                           <p className="font-syne font-bold text-white text-base mb-0.5">{m.alert.name}</p>
-                          <p className="text-white/50 text-xs mb-2">{m.alert.age} years old · {m.alert.gender} · Last seen: {m.alert.lastSeen}</p>
+                          <p className="text-white/50 text-xs mb-2">
+                            {m.alert.age} years old · {m.alert.gender} · Last seen: {m.alert.lastSeen}
+                          </p>
                           <p className="text-white/60 text-xs leading-relaxed mb-3">{m.alert.description}</p>
 
-                          {/* AI reason */}
                           <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: '8px 10px', marginBottom: 12 }}>
-                            <p className="text-white/40 text-xs">AI reasoning: <span className="text-white/60">{m.reason}</span></p>
+                            <p className="text-white/40 text-xs">AI: <span className="text-white/60">{m.reason}</span></p>
                           </div>
 
-                          {/* Contact */}
                           <p className="text-white/40 text-xs mb-2">Reported by: {m.alert.createdBy}</p>
-                          <a href={`tel:${m.alert.contact}`}
-                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: cfg.color, border: 'none', borderRadius: 10, padding: '10px', color: '#fff', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
-                            <Phone size={14} /> Call {m.alert.contact}
-                          </a>
-                          <a href={`https://wa.me/${m.alert.contact?.replace(/\s+/g, '').replace('+', '')}`}
-                            target="_blank" rel="noreferrer"
-                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#128C7E', border: 'none', borderRadius: 10, padding: '10px', color: '#fff', fontWeight: 700, fontSize: 13, textDecoration: 'none', marginTop: 8 }}>
-                            WhatsApp the parent
-                          </a>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            <a href={`tel:${m.alert.contact}`}
+                              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: cfg.color, borderRadius: 10, padding: '10px', color: '#fff', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
+                              <Phone size={14} /> Call {m.alert.contact}
+                            </a>
+                            <a href={`https://wa.me/${m.alert.contact?.replace(/[\s+]/g, '')}`}
+                              target="_blank" rel="noreferrer"
+                              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#128C7E', borderRadius: 10, padding: '10px', color: '#fff', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
+                              WhatsApp the family
+                            </a>
+                          </div>
                         </div>
                       )
                     })}
                   </div>
-                  <p className="text-white/30 text-xs text-center mt-4 leading-relaxed">
-                    These are AI suggestions — always confirm visually before making contact. Call 17 if the situation is urgent.
+                  <p className="text-white/25 text-xs text-center mt-4 leading-relaxed">
+                    AI suggestions only — always confirm visually. Call 17 if urgent.
                   </p>
                 </div>
               )}

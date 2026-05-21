@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, X, Shield, CheckCircle2, Lock, AlertTriangle, User, Car, MapPin } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
+import { t } from '../lib/i18n'
 
 const INCIDENT_TYPES = [
   { value: 'suspicious_person', label: 'Suspicious Person', desc: 'Someone acting suspiciously around children', icon: User },
@@ -42,11 +43,11 @@ export default function AnonymousReport() {
       <div style={{ width: 72, height: 72, background: 'rgba(16,185,129,0.15)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
         <CheckCircle2 size={36} color="#10B981" />
       </div>
-      <h2 style={{ color: '#F1F5F9', marginBottom: 8 }}>Report Received</h2>
+      <h2 style={{ color: '#F1F5F9', marginBottom: 8 }}>{t('report','received')}</h2>
       <p style={{ color: 'rgba(241,245,249,0.5)', maxWidth: 240, marginBottom: 24, fontSize: 14 }}>
-        Your anonymous report has been submitted. A community moderator will review it within 2 hours.
+        {t('report','receivedSub')}
       </p>
-      <button onClick={() => navigate('/')} className="btn-primary" style={{ padding: '12px 32px', width: 'auto' }}>Back to Home</button>
+      <button onClick={() => navigate('/')} className="btn-primary" style={{ padding: '12px 32px', width: 'auto' }}>{t('report','backHome')}</button>
     </div>
   )
 
@@ -55,10 +56,10 @@ export default function AnonymousReport() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button onClick={() => navigate(-1)} className="btn-secondary" style={{ padding: '8px 10px' }}><ArrowLeft size={18} /></button>
-          <h1 style={{ fontWeight: 800, fontSize: 18, color: '#F1F5F9', margin: 0 }}>Report Incident</h1>
+          <h1 style={{ fontWeight: 800, fontSize: 18, color: '#F1F5F9', margin: 0 }}>{t('report','title')}</h1>
         </div>
         <button onClick={() => { window.location.href = 'https://www.google.com' }} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: 'rgba(241,245,249,0.4)', fontSize: 11, fontWeight: 600 }}>
-          <X size={11} />Exit
+          <X size={11} />{t('report','exit')}
         </button>
       </div>
 
@@ -69,8 +70,8 @@ export default function AnonymousReport() {
             <Lock size={20} color="#8B5CF6" />
           </div>
           <div style={{ flex: 1 }}>
-            <p style={{ fontWeight: 700, fontSize: 13, color: '#F1F5F9', margin: '0 0 2px' }}>Sexual Harassment or Abuse</p>
-            <p style={{ fontSize: 11, color: 'rgba(241,245,249,0.45)', margin: 0 }}>Private confidential flow · Trained specialists only · Quick Exit</p>
+            <p style={{ fontWeight: 700, fontSize: 13, color: '#F1F5F9', margin: '0 0 2px' }}>{t('report','sexual')}</p>
+            <p style={{ fontSize: 11, color: 'rgba(241,245,249,0.45)', margin: 0 }}>{t('report','sexualSub')}</p>
           </div>
           <ArrowLeft size={14} color="#8B5CF6" style={{ transform: 'rotate(180deg)', flexShrink: 0 }} />
         </div>
@@ -78,10 +79,10 @@ export default function AnonymousReport() {
 
       <div className="card" style={{ display: 'flex', gap: 10, marginBottom: 16, padding: 12, background: 'rgba(59,130,246,0.06)', borderColor: 'rgba(59,130,246,0.2)' }}>
         <Shield size={15} color="#3B82F6" style={{ flexShrink: 0, marginTop: 1 }} />
-        <p style={{ fontSize: 12, color: 'rgba(241,245,249,0.6)', margin: 0 }}>All reports below are anonymous — no login, no name, no identity stored.</p>
+        <p style={{ fontSize: 12, color: 'rgba(241,245,249,0.6)', margin: 0 }}>{t('report','anonymous')}</p>
       </div>
 
-      <p style={{ fontSize: 10, color: 'rgba(241,245,249,0.5)', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600, marginBottom: 8 }}>Type of Incident *</p>
+      <p style={{ fontSize: 10, color: 'rgba(241,245,249,0.5)', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600, marginBottom: 8 }}>{t('report','type')}</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
         {INCIDENT_TYPES.map((t) => (
           <button key={t.value} onClick={() => update('type', t.value)}
@@ -98,23 +99,23 @@ export default function AnonymousReport() {
         ))}
       </div>
 
-      <p style={{ fontSize: 10, color: 'rgba(241,245,249,0.5)', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600, marginBottom: 6 }}>Location *</p>
+      <p style={{ fontSize: 10, color: 'rgba(241,245,249,0.5)', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600, marginBottom: 6 }}>{t('report','location')}</p>
       <select className="input-field" style={{ marginBottom: 14 }} value={form.location} onChange={(e) => update('location', e.target.value)}>
-        <option value="">Select area...</option>
+        <option value="">{t('report','selectLoc')}</option>
         {AREAS.map((a) => <option key={a} value={a}>{a}</option>)}
       </select>
 
-      <p style={{ fontSize: 10, color: 'rgba(241,245,249,0.5)', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600, marginBottom: 6 }}>What happened? *</p>
+      <p style={{ fontSize: 10, color: 'rgba(241,245,249,0.5)', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600, marginBottom: 6 }}>{t('report','what')}</p>
       <textarea className="input-field" style={{ resize: 'none', marginBottom: 20 }} rows={4}
-        placeholder="Describe what you saw. Include the person's appearance, what they were doing, time, and exact location."
+        placeholder={t('report','whatPH')}
         value={form.description} onChange={(e) => update('description', e.target.value)} />
 
       <button className="btn-primary" style={{ opacity: (!form.type || !form.description || !form.location) ? 0.5 : 1 }}
         onClick={() => { if (form.type && form.description && form.location) handleSubmit() }}>
-        Submit Anonymous Report
+        {t('report','submit')}
       </button>
       <p style={{ textAlign: 'center', fontSize: 11, color: 'rgba(241,245,249,0.25)', marginTop: 10 }}>
-        Reviewed by trained moderators within 2 hours
+        {t('report','note')}
       </p>
     </div>
   )

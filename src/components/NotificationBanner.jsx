@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Bell, X } from 'lucide-react'
+import { t } from '../lib/i18n'
 
 export default function NotificationBanner() {
   const [status, setStatus] = useState(null) // null | 'prompt' | 'granted' | 'denied'
@@ -39,15 +40,15 @@ export default function NotificationBanner() {
         <Bell size={16} color="#EF4444" />
       </div>
       <div style={{ flex: 1 }}>
-        <p style={{ fontSize: 12, fontWeight: 700, color: '#F1F5F9', margin: '0 0 2px' }}>Enable missing child alerts</p>
-        <p style={{ fontSize: 11, color: 'rgba(241,245,249,0.5)', margin: 0, lineHeight: 1.4 }}>Get instant browser notifications when a child is reported missing in your area.</p>
+        <p style={{ fontSize: 12, fontWeight: 700, color: '#F1F5F9', margin: '0 0 2px' }}>{t('notification','title')}</p>
+        <p style={{ fontSize: 11, color: 'rgba(241,245,249,0.5)', margin: 0, lineHeight: 1.4 }}>{t('notification','body')}</p>
       </div>
       <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
         <button
           onClick={requestPermission}
           style={{ background: '#EF4444', border: 'none', borderRadius: 8, padding: '6px 10px', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
         >
-          Enable
+          {t('notification','enable')}
         </button>
         <button
           onClick={() => setDismissed(true)}

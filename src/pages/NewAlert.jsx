@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Camera, MapPin, Phone, User, AlertCircle, CheckCircle2, X } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
+import { t } from '../lib/i18n'
 
 const CAMEROON_AREAS = [
   'Buea Town, Buea', 'Molyko, Buea', 'Sandpit, Buea', 'Bonduma, Buea',
@@ -62,22 +63,14 @@ export default function NewAlert() {
         <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mb-5">
           <CheckCircle2 size={40} className="text-emerald-400" />
         </div>
-        <h2 className="font-syne font-bold text-white text-2xl mb-2">Alert Sent!</h2>
-        <p className="text-white/50 text-sm mb-8 max-w-xs">
-          The community has been notified. Share on WhatsApp to reach even more people.
-        </p>
+        <h2 className="font-syne font-bold text-white text-2xl mb-2">{t('alert','sent')}</h2>
+        <p className="text-white/50 text-sm mb-8 max-w-xs">{t('alert','sentSub')}</p>
         <div className="w-full max-w-xs space-y-3">
-          <button
-            className="btn-primary w-full"
-            onClick={() => navigate(`/alert/${submittedId}`)}
-          >
-            View Alert &amp; Share on WhatsApp
+          <button className="btn-primary w-full" onClick={() => navigate(`/alert/${submittedId}`)}>
+            {t('alert','viewShare')}
           </button>
-          <button
-            className="btn-secondary w-full"
-            onClick={() => navigate('/')}
-          >
-            Back to Home
+          <button className="btn-secondary w-full" onClick={() => navigate('/')}>
+            {t('alert','backHome')}
           </button>
         </div>
       </div>
@@ -92,8 +85,8 @@ export default function NewAlert() {
           <ArrowLeft size={18} className="text-white/70" />
         </button>
         <div>
-          <h1 className="font-syne font-bold text-white text-lg">Missing Child Alert</h1>
-          <p className="text-white/40 text-xs">Step {step} of 3</p>
+          <h1 className="font-syne font-bold text-white text-lg">{t('alert','title')}</h1>
+          <p className="text-white/40 text-xs">{t('alert','step')} {step} {t('alert','of')} 3</p>
         </div>
       </div>
 
@@ -133,37 +126,37 @@ export default function NewAlert() {
                 <span className="text-white/30 text-xs">Photo</span>
               </label>
             )}
-            <p className="text-white/40 text-xs text-center">Upload child's photo (optional but recommended)</p>
+            <p className="text-white/40 text-xs text-center">{t('alert','photoHint')}</p>
             <label htmlFor="child-photo-input" className="btn-secondary text-sm py-2 px-4 cursor-pointer">
-              {photoPreview ? 'Change Photo' : 'Upload Photo'}
+              {photoPreview ? t('alert','changePhoto') : t('alert','uploadPhoto')}
             </label>
           </div>
 
           <div>
-            <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">Child's Full Name *</label>
-            <input className="input-field" placeholder="e.g. Amara Tchinda" value={form.name} onChange={(e) => update('name', e.target.value)} />
+            <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">{t('alert','fullName')}</label>
+            <input className="input-field" placeholder={t('alert','namePH')} value={form.name} onChange={(e) => update('name', e.target.value)} />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">Age *</label>
+              <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">{t('alert','age')}</label>
               <input type="number" className="input-field" placeholder="e.g. 8" min="1" max="17" value={form.age} onChange={(e) => update('age', e.target.value)} />
             </div>
             <div>
-              <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">Gender *</label>
+              <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">{t('alert','gender')}</label>
               <select className="input-field" value={form.gender} onChange={(e) => update('gender', e.target.value)}>
-                <option value="">Select</option>
-                <option value="Female">Female</option>
-                <option value="Male">Male</option>
+                <option value="">{t('alert','select')}</option>
+                <option value="Female">{t('alert','female')}</option>
+                <option value="Male">{t('alert','male')}</option>
               </select>
             </div>
           </div>
 
           <div>
-            <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">Description *</label>
+            <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">{t('alert','description')}</label>
             <textarea
               className="input-field resize-none" rows={3}
-              placeholder="Clothing, hair, any distinguishing features (scars, birthmarks, etc)"
+              placeholder={t('alert','descPH')}
               value={form.description} onChange={(e) => update('description', e.target.value)}
             />
           </div>
@@ -173,7 +166,7 @@ export default function NewAlert() {
             disabled={!form.name || !form.age || !form.gender || !form.description}
             onClick={() => setStep(2)}
           >
-            Next: Last Known Location →
+            {t('alert','nextLocation')}
           </button>
         </div>
       )}
@@ -184,14 +177,14 @@ export default function NewAlert() {
           <div className="card p-4 border-amber-500/20">
             <div className="flex items-start gap-3">
               <MapPin size={18} className="text-amber-400 flex-shrink-0 mt-0.5" />
-              <p className="text-white/70 text-sm">Select the area where the child was last seen. The more specific, the faster the community can help.</p>
+              <p className="text-white/70 text-sm">{t('alert','lastSeenArea').replace('*','').trim()}</p>
             </div>
           </div>
 
           <div>
-            <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">Last Seen Area *</label>
+            <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">{t('alert','lastSeenArea')}</label>
             <select className="input-field" value={form.lastSeen} onChange={(e) => update('lastSeen', e.target.value)}>
-              <option value="">Select area...</option>
+              <option value="">{t('alert','selectArea')}</option>
               {CAMEROON_AREAS.map((area) => (
                 <option key={area} value={area}>{area}</option>
               ))}
@@ -200,34 +193,30 @@ export default function NewAlert() {
 
           {form.lastSeen === 'Other (type below)' && (
             <div>
-              <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">Custom Location</label>
+              <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">{t('alert','moreDetails')}</label>
               <input className="input-field" placeholder="e.g. Near GS Tiko, behind the market" value={form.customLocation} onChange={(e) => update('customLocation', e.target.value)} />
             </div>
           )}
 
           <div>
-            <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">Any Additional Location Details</label>
+            <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">{t('alert','moreDetails')}</label>
             <textarea
               className="input-field resize-none" rows={2}
-              placeholder="Near the roundabout, behind the church, in front of the school..."
+              placeholder={t('alert','moreDetailsPH')}
               value={form.locationDetails} onChange={(e) => update('locationDetails', e.target.value)}
             />
           </div>
 
           <div className="card p-4 bg-red-500/5 border-red-500/20">
             <p className="text-white/50 text-xs leading-relaxed">
-              <span className="text-red-400 font-semibold">WhatsApp Alert:</span> After submission, a pre-formatted WhatsApp message will be ready to share instantly to your contacts and status.
+              <span className="text-red-400 font-semibold">WhatsApp:</span> {t('alert','whatsappNote')}
             </p>
           </div>
 
           <div className="flex gap-3">
-            <button className="btn-secondary flex-1" onClick={() => setStep(1)}>← Back</button>
-            <button
-              className="btn-primary flex-1"
-              disabled={!form.lastSeen}
-              onClick={() => setStep(3)}
-            >
-              Next: Contact Info →
+            <button className="btn-secondary flex-1" onClick={() => setStep(1)}>{t('alert','back')}</button>
+            <button className="btn-primary flex-1" disabled={!form.lastSeen} onClick={() => setStep(3)}>
+              {t('alert','nextContact')}
             </button>
           </div>
         </div>
@@ -237,12 +226,12 @@ export default function NewAlert() {
       {step === 3 && (
         <div className="space-y-4 animate-fade-up">
           <div>
-            <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">Your Name / Relationship *</label>
-            <input className="input-field" placeholder="e.g. Parent - Mama Tchinda / Teacher at GS Molyko" value={form.createdBy} onChange={(e) => update('createdBy', e.target.value)} />
+            <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">{t('alert','yourName')}</label>
+            <input className="input-field" placeholder={t('alert','yourNamePH')} value={form.createdBy} onChange={(e) => update('createdBy', e.target.value)} />
           </div>
 
           <div>
-            <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">Contact Number *</label>
+            <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">{t('alert','contactNum')}</label>
             <div className="relative">
               <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
               <input className="input-field pl-9" placeholder="+237 6XX XXX XXX" type="tel" value={form.contact} onChange={(e) => update('contact', e.target.value)} />
@@ -251,11 +240,11 @@ export default function NewAlert() {
 
           {/* Summary */}
           <div className="card p-4 space-y-2">
-            <h3 className="font-syne font-bold text-white text-sm mb-3">Alert Summary</h3>
+            <h3 className="font-syne font-bold text-white text-sm mb-3">{t('alert','summary')}</h3>
             {photoPreview && (
               <div className="flex items-center gap-3 pb-2 mb-1 border-b border-white/5">
                 <img src={photoPreview} alt="Child photo" className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
-                <span className="text-white/50 text-xs">Photo attached</span>
+                <span className="text-white/50 text-xs">{t('alert','photoAttached')}</span>
               </div>
             )}
             {[
@@ -277,13 +266,9 @@ export default function NewAlert() {
           </div>
 
           <div className="flex gap-3">
-            <button className="btn-secondary flex-1" onClick={() => setStep(2)}>← Back</button>
-            <button
-              className="btn-primary flex-1"
-              disabled={!form.createdBy || !form.contact}
-              onClick={handleSubmit}
-            >
-              🚨 Send Alert Now
+            <button className="btn-secondary flex-1" onClick={() => setStep(2)}>{t('alert','back')}</button>
+            <button className="btn-primary flex-1" disabled={!form.createdBy || !form.contact} onClick={handleSubmit}>
+              🚨 {t('alert','send')}
             </button>
           </div>
         </div>

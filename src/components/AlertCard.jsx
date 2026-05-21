@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { MapPin, Clock, Eye, Share2, Wifi, MessageSquare } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import { t } from '../lib/i18n'
 
 const statusConfig = {
   active: { label: 'MISSING', className: 'badge-active', dot: true },
@@ -63,11 +64,11 @@ export default function AlertCard({ alert }) {
 
       <div style={{ display: 'flex', gap: 8 }}>
         <Link to={`/alert/${alert.id}`} style={{ flex: 1, textAlign: 'center', padding: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: 10, color: 'rgba(241,245,249,0.7)', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
-          View Details
+          {t('card','viewDetails')}
         </Link>
         {alert.status === 'active' && (
           <button onClick={handleWhatsAppShare} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '8px 12px', background: 'rgba(16,185,129,0.12)', border: 'none', borderRadius: 10, color: '#10B981', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-            <Share2 size={13} />Share
+            <Share2 size={13} />{t('card','share')}
           </button>
         )}
       </div>

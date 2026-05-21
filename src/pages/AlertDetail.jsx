@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, MapPin, Clock, Share2, Eye, Plus, Phone, CheckCircle2, AlertCircle, Heart } from 'lucide-react'
 import { formatDistanceToNow, format } from 'date-fns'
 import { useApp } from '../contexts/AppContext'
+import { t } from '../lib/i18n'
 
 const FOUND_METHODS = [
   'Child came home on their own',
@@ -29,14 +30,14 @@ export default function AlertDetail() {
 
   if (!alert) return (
     <div className="page flex items-center justify-center">
-      <p className="text-white/40">Alert not found</p>
+      <p className="text-white/40">{t('detail','notFound')}</p>
     </div>
   )
 
   const timeAgo = formatDistanceToNow(new Date(alert.createdAt), { addSuffix: true })
   const lastSeenDisplay = alert.lastSeenTime
     ? format(new Date(alert.lastSeenTime), 'EEEE, dd MMM yyyy · HH:mm')
-    : 'Time not recorded'
+    : t('detail','timeNotRec')
 
   const shareMessage = () => {
     const url = `${window.location.origin}/alert/${alert.id}`
@@ -77,7 +78,7 @@ export default function AlertDetail() {
 
   const statusBg = alert.status === 'active' ? 'bg-red-500/10 border-red-500/30' : 'bg-emerald-500/10 border-emerald-500/30'
   const statusText = alert.status === 'active' ? 'text-red-400' : 'text-emerald-400'
-  const statusLabel = alert.status === 'active' ? 'MISSING — HELP FIND THIS CHILD' : 'CHILD FOUND — RESOLVED'
+  const statusLabel = alert.status === 'active' ? t('detail','missing') : t('detail','resolved')
 
   return (
     <div className="page">
@@ -86,11 +87,11 @@ export default function AlertDetail() {
         <button onClick={() => navigate(-1)} className="w-9 h-9 bg-white/5 rounded-xl flex items-center justify-center">
           <ArrowLeft size={18} className="text-white/70" />
         </button>
-        <h1 className="font-syne font-bold text-white text-lg flex-1">Alert Details</h1>
+        <h1 className="font-syne font-bold text-white text-lg flex-1">{t('detail','title')}</h1>
         {alert.status === 'active' && (
           <button onClick={handleShare} className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600/20 rounded-xl text-emerald-400 text-sm font-medium">
             <Share2 size={14} />
-            Share
+            {t('detail','share')}
           </button>
         )}
       </div>
@@ -106,15 +107,15 @@ export default function AlertDetail() {
           {!showFoundForm ? (
             <button onClick={() => setShowFoundForm(true)} className="w-full flex items-center justify-center gap-2 py-1">
               <CheckCircle2 size={18} className="text-emerald-400" />
-              <span className="font-syne font-bold text-emerald-400 text-sm">Child has been found? Let the community know</span>
+              <span className="font-syne font-bold text-emerald-400 text-sm">{t('detail','foundPrompt')}</span>
             </button>
           ) : (
             <div className="space-y-3">
               <div className="flex items-center gap-2 mb-1">
                 <CheckCircle2 size={16} className="text-emerald-400" />
-                <h4 className="font-syne font-bold text-white text-sm">Report Child Found</h4>
+                <h4 className="font-syne font-bold text-white text-sm">{t('detail','reportFound')}</h4>
               </div>
-              <p className="text-white/50 text-xs">How was {alert.name} found?</p>
+              <p className="text-white/50 text-xs">How was {alert.name} {t('detail','howFound')}</p>
               <div className="flex flex-col gap-2">
                 {FOUND_METHODS.map((method) => (
                   <button key={method} onClick={() => setFoundMethod(method)} style={{ background: foundMethod === method ? 'rgba(16,185,129,0.12)' : '#111827', border: `1px solid ${foundMethod === method ? 'rgba(16,185,129,0.4)' : 'rgba(255,255,255,0.06)'}`, borderRadius: 10, padding: '9px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', textAlign: 'left' }}>
@@ -124,13 +125,13 @@ export default function AlertDetail() {
                 ))}
               </div>
               <div>
-                <p className="text-white/50 text-xs mb-1.5">Message to the community (optional)</p>
+                <p className="text-white/50 text-xs mb-1.5">{t('detail','thankYouMsg')}</p>
                 <textarea className="input-field resize-none" rows={3} placeholder={`e.g. Thank you to everyone who shared this alert. ${alert.name} is safe and home now. God bless you all.`} value={foundMessage} onChange={(e) => setFoundMessage(e.target.value)} />
               </div>
               <div className="flex gap-2">
-                <button className="btn-secondary flex-1 py-2 text-sm" onClick={() => setShowFoundForm(false)}>Cancel</button>
+                <button className="btn-secondary flex-1 py-2 text-sm" onClick={() => setShowFoundForm(false)}>{t('detail','cancel')}</button>
                 <button disabled={!foundMethod} onClick={async () => { await resolveAlert(alert.id); setFoundConfirmed(true); setShowFoundForm(false) }} style={{ flex: 2, background: foundMethod ? '#10B981' : 'rgba(16,185,129,0.15)', border: 'none', borderRadius: 12, padding: '10px', color: foundMethod ? '#fff' : 'rgba(16,185,129,0.4)', fontWeight: 700, fontSize: 13, cursor: foundMethod ? 'pointer' : 'default' }}>
-                  ✅ Confirm Child Found
+                  ✅ {t('detail','confirmFound')}
                 </button>
               </div>
             </div>
@@ -144,12 +145,12 @@ export default function AlertDetail() {
           <div style={{ width: 56, height: 56, background: 'rgba(16,185,129,0.15)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
             <Heart size={26} className="text-emerald-400" />
           </div>
-          <h3 className="font-syne font-bold text-white text-lg mb-1">{alert.name} has been found safe</h3>
-          <p className="text-white/50 text-sm mb-4 leading-relaxed">{foundMethod && `${foundMethod}. `}Thank the community by sharing this message on WhatsApp.</p>
+          <h3 className="font-syne font-bold text-white text-lg mb-1">{alert.name} {t('detail','foundSafe')}</h3>
+          <p className="text-white/50 text-sm mb-4 leading-relaxed">{foundMethod && `${foundMethod}. `}{t('detail','thankCommunity')}</p>
           <button onClick={() => { const msg = `✅ *CHILD FOUND — Thank You!*\n\n*ChildShield Cameroon*\n\nGreat news! *${alert.name}* (${alert.age} years old) has been found safe! 🙏${foundMethod ? `\n\n_${foundMethod}._` : ''}${foundMessage ? `\n\n"${foundMessage}"` : ''}\n\nThank you to every member of the ChildShield community who shared this alert. Your help made a real difference. ❤️\n\n_ChildShield — Community Child Safety_`; window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank') }} style={{ width: '100%', background: '#128C7E', border: 'none', borderRadius: 12, padding: '12px', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', marginBottom: 10 }}>
-            Share Thank You on WhatsApp
+            {t('detail','shareThankYou')}
           </button>
-          <button className="btn-secondary w-full" onClick={() => navigate('/')}>Back to Home</button>
+          <button className="btn-secondary w-full" onClick={() => navigate('/')}>{t('detail','backHome')}</button>
         </div>
       )}
 
@@ -165,7 +166,7 @@ export default function AlertDetail() {
             />
             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '32px 16px 14px', background: 'linear-gradient(to top, rgba(8,14,26,0.95), transparent)' }}>
               <h2 className="font-syne font-bold text-white text-xl" style={{ margin: 0 }}>{alert.name}</h2>
-              <p className="text-white/70 text-sm" style={{ margin: '2px 0 0' }}>{alert.age} years old · {alert.gender}</p>
+              <p className="text-white/70 text-sm" style={{ margin: '2px 0 0' }}>{alert.age} {t('detail','yearsOld')} · {alert.gender}</p>
             </div>
           </div>
         ) : (
@@ -177,12 +178,12 @@ export default function AlertDetail() {
             </div>
             <div className="flex-1">
               <h2 className="font-syne font-bold text-white text-xl">{alert.name}</h2>
-              <p className="text-white/50 text-sm">{alert.age} years old · {alert.gender}</p>
-              <p className="text-white/40 text-xs mt-1">Reported {timeAgo}</p>
+              <p className="text-white/50 text-sm">{alert.age} {t('detail','yearsOld')} · {alert.gender}</p>
+              <p className="text-white/40 text-xs mt-1">{t('detail','reported')} {timeAgo}</p>
             </div>
           </div>
         )}
-        {alert.photo && <p className="text-white/30 text-xs px-5 pt-2 pb-1" style={{ margin: 0 }}>Reported {timeAgo}</p>}
+        {alert.photo && <p className="text-white/30 text-xs px-5 pt-2 pb-1" style={{ margin: 0 }}>{t('detail','reported')} {timeAgo}</p>}
 
         <div className="mt-4 space-y-3 pt-4 border-t border-white/5 px-5 pb-5">
           <div className="flex items-start gap-3">
@@ -190,7 +191,7 @@ export default function AlertDetail() {
               <MapPin size={14} className="text-red-400" />
             </div>
             <div>
-              <p className="text-white/40 text-xs">Last Seen</p>
+              <p className="text-white/40 text-xs">{t('detail','lastSeen')}</p>
               <p className="text-white text-sm font-medium">{alert.lastSeen}</p>
               <p className="text-white/40 text-xs">{lastSeenDisplay}</p>
             </div>
@@ -201,7 +202,7 @@ export default function AlertDetail() {
               <Eye size={14} className="text-amber-400" />
             </div>
             <div>
-              <p className="text-white/40 text-xs">Description</p>
+              <p className="text-white/40 text-xs">{t('detail','description')}</p>
               <p className="text-white text-sm leading-relaxed">{alert.description}</p>
             </div>
           </div>
@@ -212,7 +213,7 @@ export default function AlertDetail() {
                 <Phone size={14} className="text-blue-400" />
               </div>
               <div>
-                <p className="text-white/40 text-xs">Contact</p>
+                <p className="text-white/40 text-xs">{t('detail','contact')}</p>
                 <a href={`tel:${alert.contact}`} className="text-blue-400 text-sm font-medium">{alert.contact}</a>
                 <p className="text-white/40 text-xs">{alert.createdBy}</p>
               </div>
@@ -228,8 +229,8 @@ export default function AlertDetail() {
             <Share2 size={20} className="text-emerald-400" />
           </div>
           <div className="flex-1 text-left">
-            <p className="font-syne font-bold text-white text-sm">Share on WhatsApp Status</p>
-            <p className="text-white/40 text-xs">Alert your contacts and increase visibility instantly</p>
+            <p className="font-syne font-bold text-white text-sm">{t('detail','whatsappCta')}</p>
+            <p className="text-white/40 text-xs">{t('detail','whatsappSub')}</p>
           </div>
         </button>
       )}
@@ -238,7 +239,7 @@ export default function AlertDetail() {
       <section className="mb-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-syne font-bold text-white">
-            Community Sightings
+            {t('detail','sightings')}
             {alert.sightings.length > 0 && (
               <span className="ml-2 badge-review">{alert.sightings.length}</span>
             )}
@@ -246,7 +247,7 @@ export default function AlertDetail() {
           {alert.status === 'active' && (
             <button onClick={() => setShowSightingForm(!showSightingForm)} className="flex items-center gap-1 text-amber-400 text-sm font-medium">
               <Plus size={14} />
-              I saw this child
+              {t('detail','sawChild')}
             </button>
           )}
         </div>
@@ -254,19 +255,19 @@ export default function AlertDetail() {
         {submitted && (
           <div className="card p-3 mb-3 bg-emerald-500/10 border-emerald-500/30 flex items-center gap-2">
             <CheckCircle2 size={16} className="text-emerald-400" />
-            <p className="text-emerald-400 text-sm">Sighting submitted! Thank you for helping.</p>
+            <p className="text-emerald-400 text-sm">{t('detail','sightingThanks')}</p>
           </div>
         )}
 
         {showSightingForm && (
           <div className="card p-4 mb-3 border-amber-500/20 animate-fade-up">
-            <h4 className="font-syne font-bold text-white text-sm mb-3">Report a Sighting</h4>
+            <h4 className="font-syne font-bold text-white text-sm mb-3">{t('detail','reportSighting')}</h4>
             <div className="space-y-3">
-              <input className="input-field" placeholder="Location (e.g. near GS Buea Town)" value={sighting.location} onChange={(e) => setSighting((s) => ({ ...s, location: e.target.value }))} />
-              <textarea className="input-field resize-none" rows={2} placeholder="What did you see? When? Any other details..." value={sighting.description} onChange={(e) => setSighting((s) => ({ ...s, description: e.target.value }))} />
+              <input className="input-field" placeholder={t('detail','locationPH')} value={sighting.location} onChange={(e) => setSighting((s) => ({ ...s, location: e.target.value }))} />
+              <textarea className="input-field resize-none" rows={2} placeholder={t('detail','sightingPH')} value={sighting.description} onChange={(e) => setSighting((s) => ({ ...s, description: e.target.value }))} />
               <div className="flex gap-2">
-                <button className="btn-secondary flex-1 py-2 text-sm" onClick={() => setShowSightingForm(false)}>Cancel</button>
-                <button className="btn-primary flex-1 py-2 text-sm" onClick={handleSightingSubmit}>Submit Sighting</button>
+                <button className="btn-secondary flex-1 py-2 text-sm" onClick={() => setShowSightingForm(false)}>{t('detail','cancel')}</button>
+                <button className="btn-primary flex-1 py-2 text-sm" onClick={handleSightingSubmit}>{t('detail','submitSighting')}</button>
               </div>
             </div>
           </div>
@@ -275,8 +276,8 @@ export default function AlertDetail() {
         {alert.sightings.length === 0 ? (
           <div className="card p-6 text-center">
             <Eye size={28} className="text-white/20 mx-auto mb-2" />
-            <p className="text-white/40 text-sm">No sightings reported yet</p>
-            {alert.status === 'active' && <p className="text-white/30 text-xs mt-1">Be the first to help — report if you see this child</p>}
+            <p className="text-white/40 text-sm">{t('detail','noSightings')}</p>
+            {alert.status === 'active' && <p className="text-white/30 text-xs mt-1">{t('detail','noSightingsSub')}</p>}
           </div>
         ) : (
           <div className="space-y-3">

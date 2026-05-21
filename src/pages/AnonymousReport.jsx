@@ -64,6 +64,20 @@ export default function AnonymousReport() {
         </button>
       </div>
 
+      {/* Found a Child — dedicated route */}
+      <Link to="/found-child" style={{ textDecoration: 'none', display: 'block', marginBottom: 10 }}>
+        <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.35)', borderRadius: 16, padding: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 44, height: 44, background: 'rgba(245,158,11,0.15)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <span style={{ fontSize: 22 }}>🧒</span>
+          </div>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontWeight: 700, fontSize: 13, color: '#F1F5F9', margin: '0 0 2px' }}>I Found a Child</p>
+            <p style={{ fontSize: 11, color: 'rgba(241,245,249,0.45)', margin: 0 }}>AI matches your description against active missing alerts instantly</p>
+          </div>
+          <ArrowLeft size={14} color="#F59E0B" style={{ transform: 'rotate(180deg)', flexShrink: 0 }} />
+        </div>
+      </Link>
+
       {/* Sexual abuse — dedicated route */}
       <Link to="/abuse-report" style={{ textDecoration: 'none', display: 'block', marginBottom: 16 }}>
         <div style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 16, padding: 14, display: 'flex', alignItems: 'center', gap: 12 }}>

@@ -5,7 +5,7 @@ import AlertCard from '../components/AlertCard'
 import NotificationBanner from '../components/NotificationBanner'
 import InstallApp from '../components/InstallApp'
 import LanguageSwitcher from '../components/LanguageSwitcher'
-import { Globe } from 'lucide-react'
+import { Globe, Search } from 'lucide-react'
 import { dashboardStats } from '../data/mockData'
 import { useLanguage } from '../contexts/LanguageContext'
 
@@ -145,6 +145,7 @@ export default function Home() {
       <div style={{ display: 'flex', gap: 10 }}>
         {[
           { to: '/report',       icon: AlertTriangle, color: '#F59E0B', bg: 'rgba(245,158,11,0.12)',    label: t('home', 'reportIncident'), sub: t('home', 'suspiciousActivity'), cardBg: undefined },
+          { to: '/found-child',  icon: Search,        color: '#F59E0B', bg: 'rgba(245,158,11,0.12)',    label: 'Found a Child',             sub: 'AI matching',                   cardBg: 'rgba(245,158,11,0.05)' },
           { to: '/abuse-report', icon: Lock,          color: '#8B5CF6', bg: 'rgba(139,92,246,0.15)',    label: t('home', 'safeReporting'),  sub: t('home', 'sexualAbuse'),        cardBg: 'rgba(139,92,246,0.06)' },
           { to: '/help',         icon: LifeBuoy,      color: '#10B981', bg: 'rgba(16,185,129,0.12)',    label: t('nav', 'getHelp'),         sub: t('home', 'findSupport'),        cardBg: undefined },
         ].map(({ to, icon: Icon, color, bg, label, sub, cardBg }) => (

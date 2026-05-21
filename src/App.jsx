@@ -10,6 +10,7 @@ import AbuseReport from './pages/AbuseReport'
 import SafeZones from './pages/SafeZones'
 import GetHelp from './pages/GetHelp'
 import Dashboard from './pages/Dashboard'
+import FoundChildReport from './pages/FoundChildReport'
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
               <Route path="/map" element={<SafeZones />} />
               <Route path="/help" element={<GetHelp />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/found-child" element={<FoundChildReport />} />
             </Routes>
           </div>
         </main>

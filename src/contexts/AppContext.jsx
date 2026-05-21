@@ -273,8 +273,22 @@ export function AppProvider({ children }) {
     setAlerts((prev) => prev.map((a) => a.id === alertId ? { ...a, status: 'resolved' } : a))
   }
 
+  const addFoundChild = async (found) => {
+    if (!CONFIGURED) return // local dev — skip Supabase
+    const { error } = await supabase.from('found_children').insert([{
+      description: found.description,
+      age_estimate: found.ageEstimate,
+      gender: found.gender,
+      location: found.location,
+      contact: found.contact,
+      photo_url: found.photo,
+      status: 'searching',
+    }])
+    if (error) console.error('Found child save error:', error)
+  }
+
   return (
-    <AppContext.Provider value={{ alerts, incidents, user, setUser, notifications, loading, addAlert, addSighting, addIncident, resolveAlert }}>
+    <AppContext.Provider value={{ alerts, incidents, user, setUser, notifications, loading, addAlert, addSighting, addIncident, resolveAlert, addFoundChild }}>
       {children}
     </AppContext.Provider>
   )

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, X, Lock, Shield, Heart, Phone, MapPin, AlertTriangle, CheckCircle2, User, Users, BookOpen, Eye, FileText, Lightbulb, AlertOctagon, Building2, ShieldAlert } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
+import { useLanguage } from '../contexts/LanguageContext'
 
 const quickExit = () => { window.location.href = 'https://www.google.com' }
 
@@ -54,6 +55,7 @@ const UNDERSTAND_QA = [
 export default function AbuseReport() {
   const navigate = useNavigate()
   const { addIncident } = useApp()
+  const { t } = useLanguage()
   const [step, setStep] = useState('landing')
   const [who, setWho] = useState('')
   const [incidents, setIncidents] = useState([])
@@ -87,7 +89,7 @@ export default function AbuseReport() {
       <div style={{ width: 72, height: 72, background: 'rgba(139,92,246,0.15)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
         <Heart size={36} color="#8B5CF6" />
       </div>
-      <h2 style={{ color: '#8B5CF6', marginBottom: 8 }}>Report Received</h2>
+      <h2 style={{ color: '#8B5CF6', marginBottom: 8 }}>{t('abuse','received')}</h2>
       <p style={{ color: 'rgba(241,245,249,0.5)', maxWidth: 260, marginBottom: 24, fontSize: 14 }}>
         You did the right thing. A trained child protection specialist will review this within 2 hours.
       </p>
@@ -126,9 +128,9 @@ export default function AbuseReport() {
         ))}
       </div>
 
-      <button onClick={() => navigate('/')} className="btn-secondary" style={{ width: '100%', marginBottom: 8 }}>Back to Home</button>
+      <button onClick={() => navigate('/')} className="btn-secondary" style={{ width: '100%', marginBottom: 8 }}>{t('abuse','backHome')}</button>
       <button onClick={quickExit} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: 10, padding: '10px', cursor: 'pointer', color: 'rgba(241,245,249,0.4)', width: '100%', fontSize: 13 }}>
-        Close this page immediately
+        {t('abuse','close')}
       </button>
     </div>
   )
@@ -142,12 +144,12 @@ export default function AbuseReport() {
             <ArrowLeft size={18} />
           </button>
           <div>
-            <h1 style={{ fontWeight: 800, fontSize: 18, color: '#F1F5F9', margin: 0 }}>Safe Reporting</h1>
+            <h1 style={{ fontWeight: 800, fontSize: 18, color: '#F1F5F9', margin: 0 }}>{t('abuse','title')}</h1>
             <p style={{ fontSize: 10, color: 'rgba(241,245,249,0.4)', margin: 0 }}>Sexual Harassment & Abuse</p>
           </div>
         </div>
         <button onClick={quickExit} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 9, padding: '7px 12px', cursor: 'pointer', color: 'rgba(241,245,249,0.5)', fontSize: 11, fontWeight: 600 }}>
-          <X size={11} />Quick Exit
+          <X size={11} />{t('abuse','quickExit')}
         </button>
       </div>
 
@@ -157,7 +159,7 @@ export default function AbuseReport() {
           <Lock size={16} color="#8B5CF6" />
         </div>
         <div>
-          <p style={{ fontWeight: 700, fontSize: 13, color: '#8B5CF6', margin: '0 0 3px' }}>Your privacy is completely protected</p>
+          <p style={{ fontWeight: 700, fontSize: 13, color: '#8B5CF6', margin: '0 0 3px' }}>{t('abuse','privacy')}</p>
           <p style={{ fontSize: 12, color: 'rgba(241,245,249,0.5)', margin: 0, lineHeight: 1.5 }}>No name, no phone number, no identity stored. Reports go only to trained child protection specialists.</p>
         </div>
       </div>
@@ -165,7 +167,7 @@ export default function AbuseReport() {
       {/* LANDING */}
       {step === 'landing' && (
         <div>
-          <h2 style={{ color: '#F1F5F9', fontSize: 16, fontWeight: 700, marginBottom: 6 }}>How can we help you?</h2>
+          <h2 style={{ color: '#F1F5F9', fontSize: 16, fontWeight: 700, marginBottom: 6 }}>{t('abuse','howHelp')}</h2>
           <p style={{ fontSize: 13, color: 'rgba(241,245,249,0.5)', marginBottom: 20, lineHeight: 1.6 }}>
             This is a safe, private space. What happened to you or a child you know is not your fault.
           </p>
@@ -313,7 +315,7 @@ export default function AbuseReport() {
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={() => setStep('what')} className="btn-secondary" style={{ flex: 1, fontSize: 12, padding: '10px' }}>Back</button>
             <button onClick={() => { if (location) handleSubmit() }} style={{ flex: 2, background: location ? '#8B5CF6' : 'rgba(139,92,246,0.15)', border: 'none', borderRadius: 12, padding: '10px', color: location ? '#fff' : 'rgba(139,92,246,0.4)', fontWeight: 700, fontSize: 13, cursor: location ? 'pointer' : 'default' }}>
-              Submit Confidential Report
+              {t('abuse','submit')}
             </button>
           </div>
         </div>

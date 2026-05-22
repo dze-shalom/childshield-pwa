@@ -42,8 +42,8 @@ export default function AlertDetail() {
 
   const shareMessage = () => {
     const url = `${window.location.origin}/alert/${alert.id}`
-    const time = alert.lastSeenTime ? format(new Date(alert.lastSeenTime), 'dd MMM yyyy, HH:mm') : 'Unknown time'
-    return `🚨 *MISSING CHILD ALERT*\n\n*ChildShield Cameroon*\n\n👤 *Name:* ${alert.name}\n🎂 *Age:* ${alert.age} years old (${alert.gender})\n📍 *Last seen:* ${alert.lastSeen}\n🕐 *Time:* ${time}\n👗 *Description:* ${alert.description}\n\n📞 *Contact:* ${alert.contact}\n\n🔗 Report sightings:\n${url}\n\n_Please share widely. Every second counts._\n_ChildShield — Community Child Safety_`
+    const time = alert.lastSeenTime ? format(new Date(alert.lastSeenTime), 'dd MMM yyyy, HH:mm') : t('detail', 'timeNotRec')
+    return `🚨 *${t('share','missingTitle')}*\n\n*${t('share','platform')}*\n\n👤 *${t('share','name')}:* ${alert.name}\n🎂 *${t('share','age')}:* ${alert.age} ${t('share','yearsOld')} (${alert.gender})\n📍 *${t('share','lastSeen')}:* ${alert.lastSeen}\n🕐 *${t('share','time')}:* ${time}\n👗 *${t('share','description')}:* ${alert.description}\n\n📞 *${t('share','contact')}:* ${alert.contact}\n\n🔗 ${t('share','reportLink')}:\n${url}\n\n_${t('share','appeal')}_\n_${t('share','footer')}_`
   }
 
   const handleShare = async () => {
@@ -148,7 +148,7 @@ export default function AlertDetail() {
           </div>
           <h3 className="font-syne font-bold text-white text-lg mb-1">{alert.name} {t('detail','foundSafe')}</h3>
           <p className="text-white/50 text-sm mb-4 leading-relaxed">{foundMethod && `${foundMethod}. `}{t('detail','thankCommunity')}</p>
-          <button onClick={() => { const msg = `✅ *CHILD FOUND — Thank You!*\n\n*ChildShield Cameroon*\n\nGreat news! *${alert.name}* (${alert.age} years old) has been found safe! 🙏${foundMethod ? `\n\n_${foundMethod}._` : ''}${foundMessage ? `\n\n"${foundMessage}"` : ''}\n\nThank you to every member of the ChildShield community who shared this alert. Your help made a real difference. ❤️\n\n_ChildShield — Community Child Safety_`; window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank') }} style={{ width: '100%', background: '#128C7E', border: 'none', borderRadius: 12, padding: '12px', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', marginBottom: 10 }}>
+          <button onClick={() => { const msg = `✅ *${t('share','foundTitle')}*\n\n*${t('share','platform')}*\n\n${t('share','foundNews')} *${alert.name}* (${alert.age} ${t('share','yearsOld')}) ${t('share','foundSafe')} 🙏${foundMethod ? `\n\n_${foundMethod}._` : ''}${foundMessage ? `\n\n"${foundMessage}"` : ''}\n\n${t('share','foundThanks')} ❤️\n\n_${t('share','footer')}_`; window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank') }} style={{ width: '100%', background: '#128C7E', border: 'none', borderRadius: 12, padding: '12px', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', marginBottom: 10 }}>
             {t('detail','shareThankYou')}
           </button>
           <button className="btn-secondary w-full" onClick={() => navigate('/')}>{t('detail','backHome')}</button>

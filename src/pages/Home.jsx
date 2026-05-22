@@ -74,9 +74,9 @@ export default function Home() {
       {/* Found a Child — second major action */}
       <Link to="/found-child" style={{ display: 'block', marginBottom: 16, textDecoration: 'none' }}>
         <div style={{ background: 'linear-gradient(135deg, #B45309, #F59E0B)', borderRadius: 20, padding: '16px 20px', position: 'relative', overflow: 'hidden', boxShadow: '0 6px 20px rgba(245,158,11,0.25)' }}>
-          <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: 1.5, margin: '0 0 4px' }}>Found someone?</p>
-          <h2 style={{ fontWeight: 900, fontSize: 20, color: '#fff', margin: '0 0 3px', letterSpacing: -0.5 }}>I Found a Child</h2>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', margin: 0 }}>AI instantly matches &amp; contacts families</p>
+          <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: 1.5, margin: '0 0 4px' }}>{t('found','foundSomeone')}</p>
+          <h2 style={{ fontWeight: 900, fontSize: 20, color: '#fff', margin: '0 0 3px', letterSpacing: -0.5 }}>{t('found','title')}</h2>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', margin: 0 }}>{t('found','cardSub')}</p>
           <div style={{ position: 'absolute', right: 18, top: '50%', transform: 'translateY(-50%)', width: 48, height: 48, background: 'rgba(255,255,255,0.15)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Search size={24} color="#fff" />
           </div>

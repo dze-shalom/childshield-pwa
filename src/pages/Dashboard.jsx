@@ -3,6 +3,7 @@ import { AlertCircle, CheckCircle2, Users, MapPin, TrendingUp, Clock, Shield, Ey
 import { dashboardStats } from '../data/mockData'
 import { useApp } from '../contexts/AppContext'
 import { formatDistanceToNow } from 'date-fns'
+import { useLanguage } from '../contexts/LanguageContext'
 
 const severityConfig = {
   critical: { label: 'Critical', color: 'bg-red-500/20 text-red-400 border-red-500/30' },
@@ -82,19 +83,24 @@ function DonutChart({ data }) {
   )
 }
 
-const TABS = ['Overview', 'Incidents', 'Resolutions']
-
 export default function Dashboard() {
   const { alerts, incidents } = useApp()
-  const [tab, setTab] = useState('Overview')
+  const { t } = useLanguage()
+  const [tab, setTab] = useState('overview')
   const activeAlerts = alerts.filter((a) => a.status === 'active')
+
+  const TABS = [
+    { id: 'overview',     label: t('dash', 'overview') },
+    { id: 'incidents',    label: t('dash', 'incidents') },
+    { id: 'resolutions',  label: t('dash', 'resolutions') },
+  ]
 
   return (
     <div className="page">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="font-syne font-bold text-white text-xl">Dashboard</h1>
+          <h1 className="font-syne font-bold text-white text-xl">{t('dash','title')}</h1>
           <p className="text-white/40 text-xs mt-0.5">Admin · SW Region · Buea/Limbe</p>
         </div>
         <div className="w-9 h-9 bg-red-500/20 rounded-xl flex items-center justify-center">
@@ -104,23 +110,23 @@ export default function Dashboard() {
 
       {/* Tabs */}
       <div className="flex bg-white/5 rounded-xl p-1 mb-5">
-        {TABS.map((t) => (
-          <button key={t} onClick={() => setTab(t)}
-            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${tab === t ? 'bg-white/10 text-white' : 'text-white/40'}`}>
-            {t}
+        {TABS.map((tb) => (
+          <button key={tb.id} onClick={() => setTab(tb.id)}
+            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${tab === tb.id ? 'bg-white/10 text-white' : 'text-white/40'}`}>
+            {tb.label}
           </button>
         ))}
       </div>
 
-      {tab === 'Overview' && (
+      {tab === 'overview' && (
         <div className="space-y-4 animate-fade-up">
           {/* KPI Grid */}
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label: 'Active Alerts', value: activeAlerts.length, sub: 'Needs attention', icon: AlertCircle, color: 'text-red-400', bg: 'bg-red-500/10' },
-              { label: 'Resolved (May)', value: dashboardStats.resolvedThisMonth, sub: 'This month', icon: CheckCircle2, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-              { label: 'Verified Users', value: dashboardStats.verifiedUsers.toLocaleString(), sub: 'Community guardians', icon: Users, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-              { label: 'Avg Response', value: dashboardStats.avgResponseTime, sub: 'Community response', icon: Clock, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+              { label: t('dash','activeAlerts'), value: activeAlerts.length, sub: t('dash','needsAtt'), icon: AlertCircle, color: 'text-red-400', bg: 'bg-red-500/10' },
+              { label: t('dash','resolvedMonth'), value: dashboardStats.resolvedThisMonth, sub: t('dash','thisMonth'), icon: CheckCircle2, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+              { label: t('dash','verifiedUsers'), value: dashboardStats.verifiedUsers.toLocaleString(), sub: t('dash','guardians'), icon: Users, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+              { label: t('dash','avgResponse'), value: dashboardStats.avgResponseTime, sub: t('dash','communityResp'), icon: Clock, color: 'text-amber-400', bg: 'bg-amber-500/10' },
             ].map(({ label, value, sub, icon: Icon, color, bg }) => (
               <div key={label} className="card p-4">
                 <div className={`w-9 h-9 ${bg} rounded-xl flex items-center justify-center mb-2`}>
@@ -136,16 +142,16 @@ export default function Dashboard() {
           {/* Monthly Alerts Chart */}
           <div className="card p-4">
             <div className="flex items-center justify-between mb-1">
-              <h3 className="font-syne font-bold text-white text-sm">Monthly Alerts</h3>
+              <h3 className="font-syne font-bold text-white text-sm">{t('dash','monthlyAlerts')}</h3>
               <TrendingUp size={16} className="text-red-400" />
             </div>
-            <p className="text-white/30 text-xs mb-2">Alert volume trend — 2026</p>
+            <p className="text-white/30 text-xs mb-2">{t('dash','alertVolume')}</p>
             <BarChart data={dashboardStats.monthlyAlerts} />
           </div>
 
           {/* Incident Types */}
           <div className="card p-4">
-            <h3 className="font-syne font-bold text-white text-sm mb-3">Incidents by Type</h3>
+            <h3 className="font-syne font-bold text-white text-sm mb-3">{t('dash','byType')}</h3>
             <DonutChart data={dashboardStats.incidentsByType} />
           </div>
 
@@ -153,7 +159,7 @@ export default function Dashboard() {
           <div className="card p-4 bg-red-500/5 border-red-500/15">
             <div className="flex items-center gap-2 mb-3">
               <MapPin size={16} className="text-red-400" />
-              <h3 className="font-syne font-bold text-white text-sm">AI Risk Heatmap — Top Zones</h3>
+              <h3 className="font-syne font-bold text-white text-sm">{t('dash','riskZones')}</h3>
             </div>
             {[
               { zone: 'Buea Town Corridor', risk: 'High', pct: 85 },
@@ -174,14 +180,14 @@ export default function Dashboard() {
                 </div>
               </div>
             ))}
-            <p className="text-white/30 text-xs mt-2">Based on {dashboardStats.totalReports} community reports · Updated hourly</p>
+            <p className="text-white/30 text-xs mt-2">Based on {dashboardStats.totalReports} {t('dash','totalReports')} · {t('dash','updated')}</p>
           </div>
         </div>
       )}
 
-      {tab === 'Incidents' && (
+      {tab === 'incidents' && (
         <div className="space-y-3 animate-fade-up">
-          <p className="text-white/40 text-xs">{incidents.length} total reports</p>
+          <p className="text-white/40 text-xs">{incidents.length} {t('dash','totalReports2')}</p>
           {incidents.map((inc) => {
             const sev = severityConfig[inc.severity] || severityConfig.low
             return (
@@ -204,13 +210,13 @@ export default function Dashboard() {
         </div>
       )}
 
-      {tab === 'Resolutions' && (
+      {tab === 'resolutions' && (
         <div className="space-y-3 animate-fade-up">
           <div className="card p-4 bg-emerald-500/5 border-emerald-500/20 flex items-center gap-3 mb-2">
             <CheckCircle2 size={20} className="text-emerald-400" />
             <div>
-              <p className="font-syne font-bold text-white text-sm">{dashboardStats.resolvedThisMonth} children found safely this month</p>
-              <p className="text-white/40 text-xs">Through community coordination</p>
+              <p className="font-syne font-bold text-white text-sm">{dashboardStats.resolvedThisMonth} {t('dash','foundSafely')}</p>
+              <p className="text-white/40 text-xs">{t('dash','communityCoord')}</p>
             </div>
           </div>
           {dashboardStats.recentResolutions.map((r, i) => (

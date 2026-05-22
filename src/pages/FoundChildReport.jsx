@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Camera, Phone, CheckCircle2, X, User, AlertCircle } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
+import { useLanguage } from '../contexts/LanguageContext'
 
 const AREAS = [
   'Buea Town, Buea', 'Molyko, Buea', 'Sandpit, Buea', 'Bonduma, Buea',
@@ -19,6 +20,7 @@ const CONFIDENCE_CONFIG = {
 export default function FoundChildReport() {
   const navigate = useNavigate()
   const { addFoundChild } = useApp()
+  const { t } = useLanguage()
 
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
@@ -85,7 +87,7 @@ export default function FoundChildReport() {
           <ArrowLeft size={18} className="text-white/70" />
         </button>
         <div>
-          <h1 className="font-syne font-bold text-white text-lg">I Found a Child</h1>
+          <h1 className="font-syne font-bold text-white text-lg">{t('found','title')}</h1>
           {step < 3 && <p className="text-white/40 text-xs">Step {step} of 2</p>}
         </div>
       </div>
@@ -105,7 +107,7 @@ export default function FoundChildReport() {
           <div className="card p-4 bg-amber-500/5 border-amber-500/20 flex gap-3">
             <AlertCircle size={16} className="text-amber-400 flex-shrink-0 mt-0.5" />
             <p className="text-white/60 text-sm leading-relaxed">
-              Describe the child as accurately as possible. Once you submit, our system will automatically search and contact families.
+              {t('found','step1hint')}
             </p>
           </div>
 
@@ -132,17 +134,17 @@ export default function FoundChildReport() {
           </div>
 
           <div>
-            <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">Describe the child *</label>
+            <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">{t('found','descLabel')}</label>
             <textarea className="input-field resize-none" rows={4}
-              placeholder="What are they wearing? Age appearance, hair, any marks, what they are saying, school uniform, bag..."
+              placeholder={t('found','descPH')}
               value={form.description} onChange={e => update('description', e.target.value)} />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">Approx. Age</label>
+              <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">{t('found','approxAge')}</label>
               <select className="input-field" value={form.ageEstimate} onChange={e => update('ageEstimate', e.target.value)}>
-                <option value="">Unknown</option>
+                <option value="">{t('found','unknown')}</option>
                 <option value="under 5">Under 5</option>
                 <option value="5-8">5–8 years</option>
                 <option value="9-12">9–12 years</option>
@@ -150,11 +152,11 @@ export default function FoundChildReport() {
               </select>
             </div>
             <div>
-              <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">Gender</label>
+              <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">{t('found','gender')}</label>
               <select className="input-field" value={form.gender} onChange={e => update('gender', e.target.value)}>
-                <option value="">Unknown</option>
-                <option value="Female">Girl</option>
-                <option value="Male">Boy</option>
+                <option value="">{t('found','unknown')}</option>
+                <option value="Female">{t('found','girl')}</option>
+                <option value="Male">{t('found','boy')}</option>
               </select>
             </div>
           </div>
@@ -162,7 +164,7 @@ export default function FoundChildReport() {
           <button className="btn-primary w-full" disabled={!canStep2}
             style={{ background: '#F59E0B', opacity: canStep2 ? 1 : 0.4 }}
             onClick={() => setStep(2)}>
-            Next: Where &amp; How to Reach You →
+            {t('found','nextStep')}
           </button>
         </div>
       )}
@@ -171,7 +173,7 @@ export default function FoundChildReport() {
       {step === 2 && (
         <div className="space-y-4">
           <div>
-            <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">Where did you find the child? *</label>
+            <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">{t('found','whereFound')}</label>
             <select className="input-field" value={form.location} onChange={e => update('location', e.target.value)}>
               <option value="">Select area...</option>
               {AREAS.map(a => <option key={a} value={a}>{a}</option>)}
@@ -179,14 +181,14 @@ export default function FoundChildReport() {
           </div>
 
           <div>
-            <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">Where is the child right now?</label>
+            <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">{t('found','whereNow')}</label>
             <textarea className="input-field resize-none" rows={2}
-              placeholder="e.g. With me at Molyko Total station / At Buea Police Station / At the hospital..."
+              placeholder={t('found','whereNowPH')}
               value={form.currentLocation} onChange={e => update('currentLocation', e.target.value)} />
           </div>
 
           <div>
-            <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">Your Contact Number *</label>
+            <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">{t('found','yourContact')}</label>
             <div className="relative">
               <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
               <input className="input-field pl-9" placeholder="+237 6XX XXX XXX" type="tel"
@@ -209,7 +211,7 @@ export default function FoundChildReport() {
                 fontWeight: 700, fontSize: 14,
                 cursor: canSubmit ? 'pointer' : 'default',
               }}>
-              Submit Report
+              {t('found','submitBtn')}
             </button>
           </div>
         </div>
@@ -228,10 +230,8 @@ export default function FoundChildReport() {
                 <span style={{ fontSize: 28 }}>🔍</span>
               </div>
               <div className="text-center">
-                <p className="font-syne font-bold text-white text-lg mb-2">Searching active alerts...</p>
-                <p className="text-white/40 text-sm max-w-xs leading-relaxed">
-                  Our AI is comparing your description against every active missing child alert. Families will be notified automatically if we find a match.
-                </p>
+                <p className="font-syne font-bold text-white text-lg mb-2">{t('found','searching')}</p>
+                <p className="text-white/40 text-sm max-w-xs leading-relaxed">{t('found','searchSub')}</p>
               </div>
             </div>
           ) : (
@@ -240,11 +240,11 @@ export default function FoundChildReport() {
               <div className="card p-4 bg-emerald-500/5 border-emerald-500/20 flex gap-3 mb-5">
                 <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-syne font-bold text-white text-sm">Report submitted</p>
+                  <p className="font-syne font-bold text-white text-sm">{t('found','submitted')}</p>
                   <p className="text-white/50 text-xs mt-0.5 leading-relaxed">
-                    Your report is saved. {notified.length > 0
-                      ? `We sent a WhatsApp alert to the family of ${notified.join(', ')}.`
-                      : 'If a matching alert is posted later, families will be notified automatically.'}
+                    {notified.length > 0
+                      ? `${t('found','notified')} ${notified.join(', ')}.`
+                      : t('found','noMatchSub')}
                   </p>
                 </div>
               </div>
@@ -252,13 +252,11 @@ export default function FoundChildReport() {
               {matches?.length === 0 ? (
                 <div className="card p-8 text-center">
                   <User size={32} className="text-white/20 mx-auto mb-3" />
-                  <p className="font-syne font-bold text-white text-base mb-2">No active alerts match right now</p>
-                  <p className="text-white/40 text-sm leading-relaxed mb-4">
-                    Your report is saved. If a parent posts a missing alert matching this child later, they will be notified of your report.
-                  </p>
-                  <p className="text-amber-400 text-sm font-semibold mb-3">Please also call the police:</p>
+                  <p className="font-syne font-bold text-white text-base mb-2">{t('found','noMatch')}</p>
+                  <p className="text-white/40 text-sm leading-relaxed mb-4">{t('found','noMatchSub')}</p>
+                  <p className="text-amber-400 text-sm font-semibold mb-3">{t('help','footer')}</p>
                   <a href="tel:17" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#3B82F6', borderRadius: 10, padding: '10px', color: '#fff', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
-                    <Phone size={14} /> Call Police — 17
+                    <Phone size={14} /> {t('found','callPolice')}
                   </a>
                 </div>
               ) : (
@@ -278,7 +276,7 @@ export default function FoundChildReport() {
                             </span>
                             {wasNotified && (
                               <span style={{ fontSize: 10, fontWeight: 700, color: '#10B981', background: 'rgba(16,185,129,0.15)', borderRadius: 99, padding: '3px 10px' }}>
-                                ✓ Family notified
+                                ✓ {t('found','familyNotified')}
                               </span>
                             )}
                           </div>
@@ -302,7 +300,7 @@ export default function FoundChildReport() {
                             <a href={`https://wa.me/${m.alert.contact?.replace(/[\s+]/g, '')}`}
                               target="_blank" rel="noreferrer"
                               style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#128C7E', borderRadius: 10, padding: '10px', color: '#fff', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
-                              WhatsApp the family
+                              {t('found','whatsappFam')}
                             </a>
                           </div>
                         </div>
@@ -310,7 +308,7 @@ export default function FoundChildReport() {
                     })}
                   </div>
                   <p className="text-white/25 text-xs text-center mt-4 leading-relaxed">
-                    AI suggestions only — always confirm visually. Call 17 if urgent.
+                    {t('found','aiNote')}
                   </p>
                 </div>
               )}

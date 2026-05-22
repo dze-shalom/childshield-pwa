@@ -28,6 +28,18 @@ const CONFIGURED =
 
 // ── Field mappers: Supabase snake_case → app camelCase ─────────────────────
 
+const toFoundChild = (row) => ({
+  id: row.id,
+  description: row.description,
+  ageEstimate: row.age_estimate,
+  gender: row.gender,
+  location: row.location,
+  contact: row.contact,
+  photo: row.photo_url,
+  status: row.status,
+  foundAt: row.found_at,
+})
+
 const toSighting = (row) => ({
   id: row.id,
   alertId: row.alert_id,
@@ -89,6 +101,7 @@ const notifyModerator = (type, payload) => {
 export function AppProvider({ children }) {
   const [alerts, setAlerts] = useState([])
   const [incidents, setIncidents] = useState([])
+  const [foundChildren, setFoundChildren] = useState([])
   const [user, setUser] = useState({ role: 'public', name: 'Guest' })
   const [notifications, setNotifications] = useState(0)
   const [loading, setLoading] = useState(CONFIGURED)
@@ -115,9 +128,11 @@ export function AppProvider({ children }) {
     Promise.all([
       supabase.from('alerts').select('*, sightings(*)').order('created_at', { ascending: false }),
       supabase.from('incidents').select('*').order('time', { ascending: false }),
-    ]).then(([{ data: alertRows, error: ae }, { data: incRows, error: ie }]) => {
+      supabase.from('found_children').select('*').eq('status', 'searching').order('found_at', { ascending: false }),
+    ]).then(([{ data: alertRows, error: ae }, { data: incRows, error: ie }, { data: foundRows, error: fe }]) => {
       if (!ae && alertRows) setAlerts(alertRows.map(toAlert))
       if (!ie && incRows)   setIncidents(incRows.map(toIncident))
+      if (!fe && foundRows) setFoundChildren(foundRows.map(toFoundChild))
       setLoading(false)
     })
 
@@ -157,6 +172,19 @@ export function AppProvider({ children }) {
         setAlerts((prev) => prev.map((a) =>
           a.id === s.alertId ? { ...a, sightings: [...a.sightings.filter((x) => x.id !== s.id), s] } : a
         ))
+      })
+
+      // New found child report
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'found_children' }, ({ new: row }) => {
+        const fc = toFoundChild(row)
+        setFoundChildren((prev) => [fc, ...prev.filter((f) => f.id !== fc.id)])
+        if (Notification.permission === 'granted') {
+          new Notification('🟡 Found Child Report', {
+            body: `Found near ${fc.location} — help identify this child`,
+            icon: '/icons/icon-192.png',
+            tag: fc.id,
+          })
+        }
       })
 
       // New incident report (from web app or WhatsApp bot)
@@ -278,8 +306,13 @@ export function AppProvider({ children }) {
   }
 
   const addFoundChild = async (found) => {
-    if (!CONFIGURED) return // local dev — skip Supabase
-    const { error } = await supabase.from('found_children').insert([{
+    if (!CONFIGURED) {
+      // Local dev — add to state directly
+      const fc = { ...found, id: `fc${Date.now()}`, status: 'searching', foundAt: new Date().toISOString() }
+      setFoundChildren((prev) => [fc, ...prev])
+      return
+    }
+    const { data, error } = await supabase.from('found_children').insert([{
       description: found.description,
       age_estimate: found.ageEstimate,
       gender: found.gender,
@@ -287,12 +320,14 @@ export function AppProvider({ children }) {
       contact: found.contact,
       photo_url: found.photo,
       status: 'searching',
-    }])
-    if (error) console.error('Found child save error:', error)
+    }]).select().single()
+    if (error) { console.error('Found child save error:', error); return }
+    const fc = toFoundChild(data)
+    setFoundChildren((prev) => [fc, ...prev.filter((f) => f.id !== fc.id)])
   }
 
   return (
-    <AppContext.Provider value={{ alerts, incidents, user, setUser, notifications, loading, addAlert, addSighting, addIncident, resolveAlert, addFoundChild }}>
+    <AppContext.Provider value={{ alerts, incidents, foundChildren, user, setUser, notifications, loading, addAlert, addSighting, addIncident, resolveAlert, addFoundChild }}>
       {children}
     </AppContext.Provider>
   )

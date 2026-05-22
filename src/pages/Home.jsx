@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Bell, Shield, AlertCircle, CheckCircle2, Users, Clock, MessageSquare, AlertTriangle, LifeBuoy, Lock } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 import AlertCard from '../components/AlertCard'
+import FoundChildCard from '../components/FoundChildCard'
 import NotificationBanner from '../components/NotificationBanner'
 import InstallApp from '../components/InstallApp'
 import LanguageSwitcher from '../components/LanguageSwitcher'
@@ -10,7 +11,7 @@ import { dashboardStats } from '../data/mockData'
 import { useLanguage } from '../contexts/LanguageContext'
 
 export default function Home() {
-  const { alerts, notifications } = useApp()
+  const { alerts, foundChildren, notifications } = useApp()
   const { t } = useLanguage()
   const activeAlerts = alerts.filter((a) => a.status === 'active')
 
@@ -140,6 +141,26 @@ export default function Home() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {activeAlerts.map((alert) => <AlertCard key={alert.id} alert={alert} />)}
+          </div>
+        </section>
+      )}
+
+      {/* Found children — community reports needing identification */}
+      {foundChildren.length > 0 && (
+        <section style={{ marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <span style={{ fontSize: 14 }}>🧒</span>
+              <h2 style={{ fontWeight: 800, fontSize: 13, color: '#F1F5F9', margin: 0 }}>
+                Found Children — Help Find Their Families
+              </h2>
+            </div>
+            <span style={{ fontSize: 10, fontWeight: 700, color: '#F59E0B', background: 'rgba(245,158,11,0.12)', borderRadius: 99, padding: '2px 9px' }}>
+              {foundChildren.length} found
+            </span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {foundChildren.map((fc) => <FoundChildCard key={fc.id} found={fc} />)}
           </div>
         </section>
       )}

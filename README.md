@@ -143,10 +143,10 @@ Set environment variables in Vercel dashboard.
 Theme: *Harnessing Science & Innovation for Sustainable Child Safety and Community Protection in Africa*
 
 **Team:** ChildShield Cameroon  
-**Contact:** childshield.cm@gmail.com
+**Contact:** shalom.dze-kum@aims-cameroon.org
 
 ---
 
-## 📄 License
+##  License
 
 MIT — Built with ❤️ for African communities

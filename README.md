@@ -137,7 +137,7 @@ Set environment variables in Vercel dashboard.
 
 ---
 
-## 🏆 Built For
+##  Built For
 
 **AIMS Africa Science Week Hackathon 2026**  
 Theme: *Harnessing Science & Innovation for Sustainable Child Safety and Community Protection in Africa*

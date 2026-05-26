@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+﻿import { createContext, useContext, useState, useEffect } from 'react'
 import { mockAlerts, mockIncidents } from '../data/mockData'
 import { supabase } from '../lib/supabase'
+import { subscribeToPush, unsubscribeFromPush } from '../lib/pushSubscription'
 // Haversine distance between two GPS coordinates (km)
 function distanceKm(lat1, lng1, lat2, lng2) {
   const R = 6371, toRad = (d) => d * Math.PI / 180
@@ -66,6 +67,7 @@ const toAlert = (row) => ({
   lng: row.lng,
   contact: row.contact,
   createdBy: row.created_by,
+  userId: row.user_id || null, // auth user who submitted — used for ownership check
   createdAt: row.created_at,
   resolvedAt: row.resolved_at || null,
   sightings: (row.sightings || []).map(toSighting),
@@ -102,9 +104,64 @@ export function AppProvider({ children }) {
   const [alerts, setAlerts] = useState([])
   const [incidents, setIncidents] = useState([])
   const [foundChildren, setFoundChildren] = useState([])
-  const [user, setUser] = useState({ role: 'public', name: 'Guest' })
+  const [user, setUser] = useState(null) // null = loading, {} = guest, {id,...} = authed
   const [notifications, setNotifications] = useState(0)
   const [loading, setLoading] = useState(CONFIGURED)
+
+  // ── Auth session ─────────────────────────────────────────────────────────
+  useEffect(() => {
+    const toUserState = (supabaseUser) => supabaseUser
+      ? {
+          id: supabaseUser.id,
+          email: supabaseUser.email,
+          name: supabaseUser.user_metadata?.name || supabaseUser.email,
+          phone: supabaseUser.user_metadata?.phone || '',
+          role: supabaseUser.user_metadata?.role || 'public',
+        }
+      : { role: 'public', name: 'Guest' }
+
+    if (!CONFIGURED) {
+      setUser({ role: 'public', name: 'Guest' })
+      return
+    }
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(toUserState(session?.user ?? null))
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const nextUser = toUserState(session?.user ?? null)
+      setUser(nextUser)
+      // Auto-subscribe to push when user signs in, remove when they sign out
+      if (session?.user) subscribeToPush(session.user.id)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const login = async (email, password) => {
+    if (!CONFIGURED) throw new Error('Supabase is not configured — add your credentials to .env')
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) throw error
+    return data
+  }
+
+  const logout = async () => {
+    await unsubscribeFromPush()
+    if (CONFIGURED) await supabase.auth.signOut()
+    setUser({ role: 'public', name: 'Guest' })
+  }
+
+  const register = async ({ email, password, name, phone, role }) => {
+    if (!CONFIGURED) throw new Error('Supabase is not configured — add your credentials to .env')
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { name, phone, role } },
+    })
+    if (error) throw error
+    return data
+  }
 
   // Silently update user's GPS location on app open
   useEffect(() => {
@@ -212,6 +269,7 @@ export function AppProvider({ children }) {
       const newAlert = {
         ...alert, id: `a${Date.now()}`, status: 'active',
         sightings: [], createdAt: new Date().toISOString(),
+        userId: user?.id || null,
       }
       setAlerts((prev) => [newAlert, ...prev])
       return newAlert
@@ -229,6 +287,7 @@ export function AppProvider({ children }) {
       lng: alert.lng,
       contact: alert.contact,
       created_by: alert.createdBy,
+      user_id: user?.id || null,
       status: 'active',
       source: 'web',
     }]).select().single()
@@ -327,7 +386,7 @@ export function AppProvider({ children }) {
   }
 
   return (
-    <AppContext.Provider value={{ alerts, incidents, foundChildren, user, setUser, notifications, loading, addAlert, addSighting, addIncident, resolveAlert, addFoundChild }}>
+    <AppContext.Provider value={{ alerts, incidents, foundChildren, user, setUser, notifications, loading, addAlert, addSighting, addIncident, resolveAlert, addFoundChild, login, logout, register }}>
       {children}
     </AppContext.Provider>
   )

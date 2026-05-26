@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+﻿import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Camera, Phone, CheckCircle2, X, User, AlertCircle } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
@@ -62,11 +62,12 @@ export default function FoundChildReport() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ found: form }),
       })
+      if (!res.ok) throw new Error(`API error ${res.status}`)
       const data = await res.json()
       setMatches(data.matches || [])
       setNotified(data.notified || [])
     } catch {
-      setMatches([])
+      setMatches([]) // API unavailable — treat as no matches
     } finally {
       setLoading(false)
     }
@@ -244,12 +245,13 @@ export default function FoundChildReport() {
                   <p className="text-white/50 text-xs mt-0.5 leading-relaxed">
                     {notified.length > 0
                       ? `${t('found','notified')} ${notified.join(', ')}.`
-                      : t('found','noMatchSub')}
+                      : 'Your report has been saved. We searched active alerts for a possible match.'}
                   </p>
                 </div>
               </div>
 
-              {matches?.length === 0 ? (
+              {/* Safety guard: matches must be a resolved array before rendering */}
+              {(matches ?? []).length === 0 ? (
                 <div className="card p-8 text-center">
                   <User size={32} className="text-white/20 mx-auto mb-3" />
                   <p className="font-syne font-bold text-white text-base mb-2">{t('found','noMatch')}</p>
@@ -265,7 +267,7 @@ export default function FoundChildReport() {
                     {matches.length} possible match{matches.length > 1 ? 'es' : ''} found
                   </p>
                   <div className="space-y-4">
-                    {matches.map((m, i) => {
+                    {(matches || []).map((m, i) => {
                       const cfg = CONFIDENCE_CONFIG[m.level] || CONFIDENCE_CONFIG.low
                       const wasNotified = notified.includes(m.alert.name)
                       return (
@@ -287,7 +289,7 @@ export default function FoundChildReport() {
                           </p>
                           <p className="text-white/60 text-xs leading-relaxed mb-3">{m.alert.description}</p>
 
-                          <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: '8px 10px', marginBottom: 12 }}>
+                          <div style={{ background: 'var(--overlay-hover)', borderRadius: 8, padding: '8px 10px', marginBottom: 12 }}>
                             <p className="text-white/40 text-xs">AI: <span className="text-white/60">{m.reason}</span></p>
                           </div>
 

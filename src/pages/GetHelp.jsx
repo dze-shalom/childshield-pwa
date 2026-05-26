@@ -1,4 +1,4 @@
-import { useNavigate, Link } from 'react-router-dom'
+﻿import { useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, X, Shield, Phone, Lock, Building2, Users, ShieldAlert, MessageSquare, AlertOctagon, Heart } from 'lucide-react'
 import { useLanguage } from '../contexts/LanguageContext'
 
@@ -30,23 +30,23 @@ export default function GetHelp() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button onClick={() => navigate(-1)} className="btn-secondary" style={{ padding: '8px 10px' }}><ArrowLeft size={18} /></button>
-          <h1 style={{ fontWeight: 800, fontSize: 18, color: '#F1F5F9', margin: 0 }}>{t('help','title')}</h1>
+          <h1 style={{ fontWeight: 800, fontSize: 18, color: 'var(--text-primary)', margin: 0 }}>{t('help','title')}</h1>
         </div>
         <button onClick={() => { window.location.href = 'https://www.google.com' }}
-          style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: 'rgba(241,245,249,0.4)', fontSize: 11, fontWeight: 600 }}>
+          style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--overlay-hover)', border: 'none', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 11, fontWeight: 600 }}>
           <X size={11} />{t('help','quickExit')}
         </button>
       </div>
 
       <div className="card" style={{ display: 'flex', gap: 10, marginBottom: 20, padding: 12, background: 'rgba(59,130,246,0.06)', borderColor: 'rgba(59,130,246,0.2)' }}>
         <Shield size={15} color="#3B82F6" style={{ flexShrink: 0, marginTop: 1 }} />
-        <p style={{ fontSize: 12, color: 'rgba(241,245,249,0.6)', margin: 0 }}>{t('help','privacy')}</p>
+        <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0 }}>{t('help','privacy')}</p>
       </div>
 
       {/* Emergency Numbers */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
-        <Phone size={13} color="rgba(241,245,249,0.4)" />
-        <p style={{ fontSize: 10, color: 'rgba(241,245,249,0.4)', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600, margin: 0 }}>{t('help','emergency')}</p>
+        <Phone size={13} color="var(--text-muted)" />
+        <p style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600, margin: 0 }}>{t('help','emergency')}</p>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 22 }}>
         {EMERGENCY.map((c, i) => (
@@ -56,8 +56,8 @@ export default function GetHelp() {
                 <c.icon size={17} color={c.color} />
               </div>
               <div style={{ flex: 1 }}>
-                <p style={{ fontWeight: 700, fontSize: 13, color: '#F1F5F9', margin: 0 }}>{c.name}</p>
-                {c.sub && <p style={{ fontSize: 11, color: 'rgba(241,245,249,0.4)', margin: '2px 0 0' }}>{c.sub}</p>}
+                <p style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)', margin: 0 }}>{c.name}</p>
+                {c.sub && <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '2px 0 0' }}>{c.sub}</p>}
               </div>
               <span style={{ fontWeight: 900, fontSize: 16, color: c.color, flexShrink: 0 }}>{c.number}</span>
             </div>
@@ -76,8 +76,8 @@ export default function GetHelp() {
             <Lock size={17} color="#8B5CF6" />
           </div>
           <div style={{ flex: 1 }}>
-            <p style={{ fontWeight: 700, fontSize: 13, color: '#F1F5F9', margin: 0 }}>{t('help','reportAbuse')}</p>
-            <p style={{ fontSize: 11, color: 'rgba(241,245,249,0.45)', margin: '2px 0 0' }}>{t('help','reportAbuseSub')}</p>
+            <p style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)', margin: 0 }}>{t('help','reportAbuse')}</p>
+            <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '2px 0 0' }}>{t('help','reportAbuseSub')}</p>
           </div>
           <ArrowLeft size={14} color="#8B5CF6" style={{ transform: 'rotate(180deg)', flexShrink: 0 }} />
         </div>
@@ -90,8 +90,8 @@ export default function GetHelp() {
                 <r.icon size={16} color={r.color} />
               </div>
               <div style={{ flex: 1 }}>
-                <p style={{ fontWeight: 700, fontSize: 12, color: '#F1F5F9', margin: 0 }}>{r.name}</p>
-                <p style={{ fontSize: 10, color: 'rgba(241,245,249,0.35)', margin: '2px 0 0' }}>{r.hours}</p>
+                <p style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-primary)', margin: 0 }}>{r.name}</p>
+                <p style={{ fontSize: 10, color: 'var(--text-muted)', margin: '2px 0 0' }}>{r.hours}</p>
               </div>
               <span style={{ fontWeight: 700, fontSize: 12, color: '#3B82F6', flexShrink: 0 }}>{r.number}</span>
             </div>
@@ -101,7 +101,7 @@ export default function GetHelp() {
 
       {/* Step-by-step guidance */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
-        <p style={{ fontSize: 10, color: 'rgba(241,245,249,0.4)', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600, margin: 0 }}>{t('help','stepByStep')}</p>
+        <p style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600, margin: 0 }}>{t('help','stepByStep')}</p>
       </div>
       {WHAT_TO_DO.map((r, i) => {
         const Icon = ICONS[i]
@@ -111,13 +111,13 @@ export default function GetHelp() {
               <div style={{ width: 30, height: 30, background: COLORS[i] + '22', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <Icon size={14} color={COLORS[i]} />
               </div>
-              <p style={{ fontWeight: 700, fontSize: 13, color: '#F1F5F9', margin: 0 }}>{r.title}</p>
+              <p style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)', margin: 0 }}>{r.title}</p>
             </div>
             <ol style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
               {r.steps.map((step, j) => (
                 <li key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
-                  <span style={{ width: 20, height: 20, background: 'rgba(255,255,255,0.08)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: 'rgba(241,245,249,0.5)', flexShrink: 0, marginTop: 1 }}>{j + 1}</span>
-                  <p style={{ fontSize: 12, color: 'rgba(241,245,249,0.7)', margin: 0, lineHeight: 1.5 }}>{step}</p>
+                  <span style={{ width: 20, height: 20, background: 'var(--overlay-hover)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)', flexShrink: 0, marginTop: 1 }}>{j + 1}</span>
+                  <p style={{ fontSize: 12, color: 'var(--text-primary)', margin: 0, lineHeight: 1.5 }}>{step}</p>
                 </li>
               ))}
             </ol>
@@ -132,13 +132,13 @@ export default function GetHelp() {
             <MessageSquare size={17} color="#fff" />
           </div>
           <div style={{ flex: 1 }}>
-            <p style={{ fontWeight: 700, fontSize: 13, color: '#F1F5F9', margin: 0 }}>{t('help','childVoice')}</p>
-            <p style={{ fontSize: 11, color: 'rgba(241,245,249,0.4)', margin: '2px 0 0' }}>{t('help','childVoiceSub')}</p>
+            <p style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)', margin: 0 }}>{t('help','childVoice')}</p>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '2px 0 0' }}>{t('help','childVoiceSub')}</p>
           </div>
         </div>
       </Link>
 
-      <p style={{ textAlign: 'center', fontSize: 11, color: 'rgba(241,245,249,0.2)', marginTop: 16 }}>
+      <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-placeholder)', marginTop: 16 }}>
         {t('help','footer')}
       </p>
     </div>

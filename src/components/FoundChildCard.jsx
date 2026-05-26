@@ -1,27 +1,31 @@
-import { Phone, MapPin, Clock, Share2 } from 'lucide-react'
+﻿import { Phone, MapPin, Clock, Share2, Navigation } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { useLanguage } from '../contexts/LanguageContext'
+import { useTranslatedFoundChild } from '../hooks/useTranslatedFoundChild'
+import { distanceFromLocationText } from '../lib/distance'
 
 export default function FoundChildCard({ found }) {
   const { t } = useLanguage()
-  const timeAgo = found.foundAt
-    ? formatDistanceToNow(new Date(found.foundAt), { addSuffix: true })
+  const f = useTranslatedFoundChild(found) // translated description, location, gender
+  const distance = distanceFromLocationText(found.location)
+  const timeAgo = f.foundAt
+    ? formatDistanceToNow(new Date(f.foundAt), { addSuffix: true })
     : ''
 
   const handleShare = (e) => {
     e.preventDefault()
     const url = window.location.origin
-    const gender = found.gender
+    const gender = f.gender
       ? (found.gender === 'Female' ? t('found', 'girl') : t('found', 'boy'))
       : t('found', 'unknown')
     const msg =
       `🟡 *${t('share', 'platform')}*\n\n` +
       `*FOUND CHILD — HELP IDENTIFY*\n\n` +
-      `👶 *${t('share', 'description')}:* ${found.description}\n` +
-      `📍 *${t('share', 'lastSeen')}:* ${found.location}\n` +
-      (found.ageEstimate ? `🎂 *${t('share', 'age')}:* ${found.ageEstimate}\n` : '') +
-      (found.gender ? `👤 *${gender}*\n` : '') +
-      `\n📞 *${t('share', 'contact')}:* ${found.contact}\n\n` +
+      `👶 *${t('share', 'description')}:* ${f.description}\n` +
+      `📍 *${t('share', 'lastSeen')}:* ${f.location}\n` +
+      (f.ageEstimate ? `🎂 *${t('share', 'age')}:* ${f.ageEstimate}\n` : '') +
+      (f.gender ? `👤 *${gender}*\n` : '') +
+      `\n📞 *${t('share', 'contact')}:* ${f.contact}\n\n` +
       `_${t('share', 'footer')}_\n${url}`
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank')
   }
@@ -43,8 +47,8 @@ export default function FoundChildCard({ found }) {
           overflow: 'hidden',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          {found.photo
-            ? <img src={found.photo} alt="Found child" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          {f.photo
+            ? <img src={f.photo} alt="Found child" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             : <span style={{ fontSize: 24 }}>🧒</span>
           }
         </div>
@@ -60,34 +64,39 @@ export default function FoundChildCard({ found }) {
             </span>
           </div>
 
-          {found.ageEstimate || found.gender ? (
-            <p style={{ fontSize: 12, fontWeight: 600, color: '#F1F5F9', margin: '0 0 3px' }}>
-              {[found.ageEstimate, found.gender && (found.gender === 'Female' ? t('found', 'girl') : t('found', 'boy'))].filter(Boolean).join(' · ')}
+          {f.ageEstimate || f.gender ? (
+            <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 3px' }}>
+              {[f.ageEstimate, f.gender && (found.gender === 'Female' ? t('found', 'girl') : t('found', 'boy'))].filter(Boolean).join(' · ')}
             </p>
           ) : null}
 
-          <p style={{ fontSize: 12, color: 'rgba(241,245,249,0.55)', margin: '0 0 6px', lineHeight: 1.4 }}>
-            {found.description}
+          <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 6px', lineHeight: 1.4 }}>
+            {f.description}
           </p>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'rgba(241,245,249,0.35)' }}>
-              <MapPin size={10} />{found.location}
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--text-muted)' }}>
+              <MapPin size={10} />{f.location}
             </span>
             {timeAgo && (
-              <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'rgba(241,245,249,0.35)' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--text-muted)' }}>
                 <Clock size={10} />{timeAgo}
+              </span>
+            )}
+            {distance && (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#60A5FA' }}>
+                <Navigation size={10} />{distance}
               </span>
             )}
           </div>
         </div>
       </div>
 
-      <div style={{ height: 1, background: 'rgba(245,158,11,0.12)', margin: '12px 0' }} />
+      <div style={{ height: 1, background: 'rgba(245,158,11,0.15)', margin: '12px 0' }} />
 
       <div style={{ display: 'flex', gap: 8 }}>
         <a
-          href={`tel:${found.contact}`}
+          href={`tel:${f.contact}`}
           style={{
             flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
             gap: 5, padding: '8px',
@@ -95,7 +104,7 @@ export default function FoundChildCard({ found }) {
             color: '#F59E0B', fontSize: 12, fontWeight: 600, textDecoration: 'none',
           }}
         >
-          <Phone size={13} />{found.contact}
+          <Phone size={13} />{f.contact}
         </a>
         <button
           onClick={handleShare}

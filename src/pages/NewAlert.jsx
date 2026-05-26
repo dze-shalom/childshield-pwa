@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+﻿import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Camera, MapPin, Phone, User, AlertCircle, CheckCircle2, X } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'

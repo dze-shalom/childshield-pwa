@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { Bell, X } from 'lucide-react'
 import { useLanguage } from '../contexts/LanguageContext'
 
@@ -41,8 +41,8 @@ export default function NotificationBanner() {
         <Bell size={16} color="#EF4444" />
       </div>
       <div style={{ flex: 1 }}>
-        <p style={{ fontSize: 12, fontWeight: 700, color: '#F1F5F9', margin: '0 0 2px' }}>{t('notification','title')}</p>
-        <p style={{ fontSize: 11, color: 'rgba(241,245,249,0.5)', margin: 0, lineHeight: 1.4 }}>{t('notification','body')}</p>
+        <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 2px' }}>{t('notification','title')}</p>
+        <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>{t('notification','body')}</p>
       </div>
       <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
         <button
@@ -53,7 +53,7 @@ export default function NotificationBanner() {
         </button>
         <button
           onClick={() => setDismissed(true)}
-          style={{ background: 'transparent', border: 'none', padding: 4, cursor: 'pointer', color: 'rgba(241,245,249,0.3)' }}
+          style={{ background: 'transparent', border: 'none', padding: 4, cursor: 'pointer', color: 'var(--text-muted)' }}
         >
           <X size={14} />
         </button>

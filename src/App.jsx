@@ -1,6 +1,7 @@
-import { Routes, Route } from 'react-router-dom'
+﻿import { Routes, Route } from 'react-router-dom'
 import { AppProvider } from './contexts/AppContext'
 import { LanguageProvider } from './contexts/LanguageContext'
+import { ThemeProvider } from './contexts/ThemeContext'
 import BottomNav from './components/BottomNav'
 import Home from './pages/Home'
 import NewAlert from './pages/NewAlert'
@@ -11,30 +12,40 @@ import SafeZones from './pages/SafeZones'
 import GetHelp from './pages/GetHelp'
 import Dashboard from './pages/Dashboard'
 import FoundChildReport from './pages/FoundChildReport'
+import Login from './pages/Login'
+import Register from './pages/Register'
+import ChildVoice from './pages/ChildVoice'
+import ProtectedRoute from './components/ProtectedRoute'
 
 export default function App() {
   return (
+    <ThemeProvider>
     <AppProvider>
       <LanguageProvider>
-      <div className="min-h-screen bg-[#080E1A] flex">
+      <div className="min-h-screen flex" style={{ backgroundColor: 'var(--bg-app)' }}>
         <BottomNav />
         <main className="flex-1 md:ml-52 min-w-0">
-          <div className="max-w-3xl mx-auto">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/alert/new" element={<NewAlert />} />
-              <Route path="/alert/:id" element={<AlertDetail />} />
-              <Route path="/report" element={<AnonymousReport />} />
-              <Route path="/abuse-report" element={<AbuseReport />} />
-              <Route path="/map" element={<SafeZones />} />
-              <Route path="/help" element={<GetHelp />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/found-child" element={<FoundChildReport />} />
-            </Routes>
-          </div>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            {/* ── Protected: login required to submit ── */}
+            <Route path="/alert/new" element={<ProtectedRoute><NewAlert /></ProtectedRoute>} />
+            <Route path="/report" element={<ProtectedRoute><AnonymousReport /></ProtectedRoute>} />
+            <Route path="/abuse-report" element={<ProtectedRoute><AbuseReport /></ProtectedRoute>} />
+            <Route path="/found-child" element={<ProtectedRoute><FoundChildReport /></ProtectedRoute>} />
+
+            {/* ── Public: anyone can view ── */}
+            <Route path="/alert/:id" element={<AlertDetail />} />
+            <Route path="/map" element={<SafeZones />} />
+            <Route path="/help" element={<GetHelp />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/childvoice" element={<ChildVoice />} />
+          </Routes>
         </main>
       </div>
       </LanguageProvider>
     </AppProvider>
+    </ThemeProvider>
   )
 }

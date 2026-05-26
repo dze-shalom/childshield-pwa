@@ -1,9 +1,11 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, MapPin, Clock, Share2, Eye, Plus, Phone, CheckCircle2, AlertCircle, Heart } from 'lucide-react'
+import { ArrowLeft, MapPin, Clock, Share2, Eye, Plus, Phone, CheckCircle2, AlertCircle, Heart, Navigation } from 'lucide-react'
 import { formatDistanceToNow, format } from 'date-fns'
 import { useApp } from '../contexts/AppContext'
 import { useLanguage } from '../contexts/LanguageContext'
+import { useTranslatedAlert } from '../hooks/useTranslatedAlert'
+import { distanceFromCoords } from '../lib/distance'
 
 const FOUND_METHODS = [
   'Child came home on their own',
@@ -19,6 +21,10 @@ export default function AlertDetail() {
   const { alerts, addSighting, resolveAlert, user } = useApp()
   const { t } = useLanguage()
   const alert = alerts.find((a) => a.id === id)
+  const a = useTranslatedAlert(alert) // translated description, lastSeen, gender
+  const distance = alert ? distanceFromCoords(alert.lat, alert.lng) : null
+  // Only the user who created the alert can mark it as found
+  const isOwner = !!(user?.id && alert?.userId && user.id === alert.userId)
   const [showSightingForm, setShowSightingForm] = useState(false)
   const [sighting, setSighting] = useState({ location: '', description: '', reportedBy: 'Anonymous' })
   const [submitted, setSubmitted] = useState(false)
@@ -102,8 +108,8 @@ export default function AlertDetail() {
         <p className={`font-syne font-bold text-sm ${statusText}`}>{statusLabel}</p>
       </div>
 
-      {/* ── Found Flow — right after status so reporter sees it immediately ── */}
-      {alert.status === 'active' && !foundConfirmed && (
+      {/* ── Found Flow — only visible to the user who created this alert ── */}
+      {isOwner && alert.status === 'active' && !foundConfirmed && (
         <div className="card p-4 bg-emerald-500/5 border-emerald-500/20 mb-4">
           {!showFoundForm ? (
             <button onClick={() => setShowFoundForm(true)} className="w-full flex items-center justify-center gap-2 py-1">
@@ -119,8 +125,8 @@ export default function AlertDetail() {
               <p className="text-white/50 text-xs">How was {alert.name} {t('detail','howFound')}</p>
               <div className="flex flex-col gap-2">
                 {FOUND_METHODS.map((method) => (
-                  <button key={method} onClick={() => setFoundMethod(method)} style={{ background: foundMethod === method ? 'rgba(16,185,129,0.12)' : '#111827', border: `1px solid ${foundMethod === method ? 'rgba(16,185,129,0.4)' : 'rgba(255,255,255,0.06)'}`, borderRadius: 10, padding: '9px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', textAlign: 'left' }}>
-                    <span style={{ fontSize: 12, color: foundMethod === method ? '#F1F5F9' : 'rgba(241,245,249,0.6)', fontWeight: foundMethod === method ? 600 : 400 }}>{method}</span>
+                  <button key={method} onClick={() => setFoundMethod(method)} style={{ background: foundMethod === method ? 'rgba(16,185,129,0.12)' : 'var(--bg-card)', border: `1px solid ${foundMethod === method ? 'rgba(16,185,129,0.4)' : 'var(--border)'}`, borderRadius: 10, padding: '9px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', textAlign: 'left' }}>
+                    <span style={{ fontSize: 12, color: foundMethod === method ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: foundMethod === method ? 600 : 400 }}>{method}</span>
                     {foundMethod === method && <div style={{ width: 8, height: 8, background: '#10B981', borderRadius: '50%' }} />}
                   </button>
                 ))}
@@ -167,19 +173,19 @@ export default function AlertDetail() {
             />
             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '32px 16px 14px', background: 'linear-gradient(to top, rgba(8,14,26,0.95), transparent)' }}>
               <h2 className="font-syne font-bold text-white text-xl" style={{ margin: 0 }}>{alert.name}</h2>
-              <p className="text-white/70 text-sm" style={{ margin: '2px 0 0' }}>{alert.age} {t('detail','yearsOld')} · {alert.gender}</p>
+              <p className="text-white/70 text-sm" style={{ margin: '2px 0 0' }}>{alert.age} {t('detail','yearsOld')} · {a.gender}</p>
             </div>
           </div>
         ) : (
           <div className="flex items-start gap-4 p-5">
-            <div className="w-16 h-16 bg-red-900/30 rounded-2xl flex items-center justify-center flex-shrink-0">
-              <span className="font-syne font-extrabold text-xl text-white/70">
+            <div className="w-16 h-16 bg-red-500/15 rounded-2xl flex items-center justify-center flex-shrink-0">
+              <span className="font-syne font-extrabold text-xl" style={{ color: 'var(--text-secondary)' }}>
                 {alert.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
               </span>
             </div>
             <div className="flex-1">
               <h2 className="font-syne font-bold text-white text-xl">{alert.name}</h2>
-              <p className="text-white/50 text-sm">{alert.age} {t('detail','yearsOld')} · {alert.gender}</p>
+              <p className="text-white/50 text-sm">{alert.age} {t('detail','yearsOld')} · {a.gender}</p>
               <p className="text-white/40 text-xs mt-1">{t('detail','reported')} {timeAgo}</p>
             </div>
           </div>
@@ -193,8 +199,13 @@ export default function AlertDetail() {
             </div>
             <div>
               <p className="text-white/40 text-xs">{t('detail','lastSeen')}</p>
-              <p className="text-white text-sm font-medium">{alert.lastSeen}</p>
+              <p className="text-white text-sm font-medium">{a.lastSeen}</p>
               <p className="text-white/40 text-xs">{lastSeenDisplay}</p>
+              {distance && (
+                <p className="flex items-center gap-1 text-blue-400 text-xs mt-0.5">
+                  <Navigation size={10} />{distance}
+                </p>
+              )}
             </div>
           </div>
 
@@ -204,7 +215,7 @@ export default function AlertDetail() {
             </div>
             <div>
               <p className="text-white/40 text-xs">{t('detail','description')}</p>
-              <p className="text-white text-sm leading-relaxed">{alert.description}</p>
+              <p className="text-white text-sm leading-relaxed">{a.description}</p>
             </div>
           </div>
 

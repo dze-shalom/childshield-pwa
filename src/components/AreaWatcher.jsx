@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { MapPin } from 'lucide-react'
 
 export const WATCH_REGIONS = [
@@ -42,8 +42,8 @@ export default function AreaWatcher() {
   return (
     <div style={{ marginBottom: 14 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-        <MapPin size={13} color="rgba(241,245,249,0.4)" />
-        <p style={{ fontSize: 10, color: 'rgba(241,245,249,0.4)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, margin: 0 }}>
+        <MapPin size={13} color="var(--text-muted)" />
+        <p style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, margin: 0 }}>
           {selected.length === 0 ? 'Watching all areas' : `Watching: ${selected.map(id => WATCH_REGIONS.find(r => r.id === id)?.label).join(', ')}`}
         </p>
       </div>
@@ -60,9 +60,9 @@ export default function AreaWatcher() {
                 fontSize: 12,
                 fontWeight: 600,
                 cursor: 'pointer',
-                border: `1px solid ${active ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.1)'}`,
+                border: `1px solid ${active ? 'rgba(239,68,68,0.5)' : 'var(--border-input)'}`,
                 background: active ? 'rgba(239,68,68,0.12)' : 'rgba(255,255,255,0.04)',
-                color: active ? '#EF4444' : 'rgba(241,245,249,0.5)',
+                color: active ? '#EF4444' : 'var(--text-secondary)',
                 transition: 'all 0.15s',
               }}
             >

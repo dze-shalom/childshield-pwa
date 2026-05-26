@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react'
+﻿import { createContext, useContext, useState } from 'react'
 import { translations, arrTranslations } from '../lib/i18n'
 
 const LanguageContext = createContext(null)

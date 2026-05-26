@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { Download, Share, X, Smartphone } from 'lucide-react'
 import { useLanguage } from '../contexts/LanguageContext'
 
@@ -51,7 +51,7 @@ export default function InstallApp() {
           <div style={{ width: 30, height: 30, background: 'rgba(59,130,246,0.15)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Share size={14} color="#3B82F6" />
           </div>
-          <p style={{ fontSize: 12, fontWeight: 700, color: '#F1F5F9', margin: 0 }}>{t('install','iphone')}</p>
+          <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('install','iphone')}</p>
         </div>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
           {!showSteps && (
@@ -59,14 +59,14 @@ export default function InstallApp() {
               {t('install','how')}
             </button>
           )}
-          <button onClick={() => setDismissed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(241,245,249,0.3)', padding: 2 }}>
+          <button onClick={() => setDismissed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 2 }}>
             <X size={14} />
           </button>
         </div>
       </div>
       {showSteps && (
         <ol style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 5 }}>
-          {tArr('install','iosSteps').map((s, i) => <li key={i} style={{ fontSize: 12, color: 'rgba(241,245,249,0.65)', lineHeight: 1.5 }}>{s}</li>)}
+          {tArr('install','iosSteps').map((s, i) => <li key={i} style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{s}</li>)}
         </ol>
       )}
     </div>
@@ -79,14 +79,14 @@ export default function InstallApp() {
         <Download size={16} color="#10B981" />
       </div>
       <div style={{ flex: 1 }}>
-        <p style={{ fontSize: 12, fontWeight: 700, color: '#F1F5F9', margin: '0 0 2px' }}>{t('install','installCs')}</p>
-        <p style={{ fontSize: 11, color: 'rgba(241,245,249,0.5)', margin: 0 }}>{t('install','installSub')}</p>
+        <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 2px' }}>{t('install','installCs')}</p>
+        <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: 0 }}>{t('install','installSub')}</p>
       </div>
       <div style={{ display: 'flex', gap: 6 }}>
         <button onClick={handleInstall} style={{ background: '#10B981', border: 'none', borderRadius: 8, padding: '7px 12px', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
           {t('install','install')}
         </button>
-        <button onClick={() => setDismissed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(241,245,249,0.3)', padding: 4 }}>
+        <button onClick={() => setDismissed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4 }}>
           <X size={14} />
         </button>
       </div>
@@ -101,7 +101,7 @@ export default function InstallApp() {
           <div style={{ width: 30, height: 30, background: 'rgba(16,185,129,0.15)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Smartphone size={14} color="#10B981" />
           </div>
-          <p style={{ fontSize: 12, fontWeight: 700, color: '#F1F5F9', margin: 0 }}>{t('install','android')}</p>
+          <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('install','android')}</p>
         </div>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
           {!showSteps && (
@@ -109,14 +109,14 @@ export default function InstallApp() {
               How?
             </button>
           )}
-          <button onClick={() => setDismissed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(241,245,249,0.3)', padding: 2 }}>
+          <button onClick={() => setDismissed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 2 }}>
             <X size={14} />
           </button>
         </div>
       </div>
       {showSteps && (
         <ol style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 5 }}>
-          {tArr('install','androidSteps').map((s, i) => <li key={i} style={{ fontSize: 12, color: 'rgba(241,245,249,0.65)', lineHeight: 1.5 }}>{s}</li>)}
+          {tArr('install','androidSteps').map((s, i) => <li key={i} style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{s}</li>)}
         </ol>
       )}
     </div>

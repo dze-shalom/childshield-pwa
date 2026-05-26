@@ -1,4 +1,4 @@
-import { useLanguage } from '../contexts/LanguageContext'
+﻿import { useLanguage } from '../contexts/LanguageContext'
 
 const LANGS = [
   { id: 'en', label: 'EN' },
@@ -10,7 +10,7 @@ export default function LanguageSwitcher() {
   const { lang, setLang } = useLanguage()
 
   return (
-    <div style={{ display: 'flex', background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: 3, gap: 2 }}>
+    <div style={{ display: 'flex', background: 'var(--overlay-hover)', borderRadius: 10, padding: 3, gap: 2 }}>
       {LANGS.map(({ id, label }) => (
         <button
           key={id}
@@ -23,7 +23,7 @@ export default function LanguageSwitcher() {
             border: 'none',
             cursor: 'pointer',
             background: lang === id ? '#EF4444' : 'transparent',
-            color: lang === id ? '#fff' : 'rgba(241,245,249,0.45)',
+            color: lang === id ? '#fff' : 'var(--text-muted)',
             transition: 'all 0.15s',
           }}
         >

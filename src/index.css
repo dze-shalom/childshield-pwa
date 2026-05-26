@@ -2,87 +2,193 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Theme CSS Custom Properties ───────────────────────────────────────────── */
+
+:root {
+  /* Light theme — warm neutral palette, clear hierarchy */
+  --bg-app:          #E8E9ED;   /* neutral gray — white cards pop clearly */
+  --bg-surface:      #FFFFFF;
+  --bg-card:         #FFFFFF;
+  --bg-input:        #F2F2F5;   /* very light neutral — no blue tint */
+  --bg-sidebar-blur: rgba(255, 255, 255, 0.98);
+  --bg-mobile-blur:  rgba(255, 255, 255, 0.98);
+
+  --text-primary:     #1C1C1E;   /* near-black — high contrast, not harsh */
+  --text-secondary:   #3A3A3C;   /* dark gray — readable body text */
+  --text-muted:       #6C6C70;   /* medium gray — clear but soft */
+  --text-placeholder: #AEAEB2;   /* light gray — placeholder only */
+
+  --border:       #D1D1D6;        /* solid separator — clearly visible */
+  --border-input: #BCBCC0;        /* slightly stronger for inputs */
+
+  --overlay-hover:   rgba(0, 0, 0, 0.05);
+  --overlay-active:  rgba(0, 0, 0, 0.09);
+
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.07), 0 2px 8px rgba(0, 0, 0, 0.05);
+  --divider:     #D1D1D6;
+}
+
+.dark {
+  --bg-app:          #080E1A;
+  --bg-surface:      #0D1526;
+  --bg-card:         #111827;
+  --bg-input:        #1A2540;
+  --bg-sidebar-blur: rgba(13, 21, 38, 0.95);
+  --bg-mobile-blur:  rgba(13, 21, 38, 0.95);
+
+  --text-primary:     #F1F5F9;
+  --text-secondary:   rgba(241, 245, 249, 0.50);
+  --text-muted:       rgba(241, 245, 249, 0.30);
+  --text-placeholder: rgba(241, 245, 249, 0.30);
+
+  --border:       rgba(255, 255, 255, 0.05);
+  --border-input: rgba(255, 255, 255, 0.10);
+
+  --overlay-hover:  rgba(255, 255, 255, 0.05);
+  --overlay-active: rgba(255, 255, 255, 0.10);
+
+  --card-shadow: none;
+  --divider:     rgba(255, 255, 255, 0.06);
+}
+
+/* ── Base ──────────────────────────────────────────────────────────────────── */
+
 @layer base {
   * { box-sizing: border-box; }
-  
+
   body {
     font-family: 'Outfit', sans-serif;
-    background-color: #080E1A;
-    color: #F1F5F9;
+    background-color: var(--bg-app);
+    color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     overscroll-behavior: none;
+    transition: background-color 0.2s, color 0.2s;
   }
 
-  h1, h2, h3 {
-    font-family: 'Syne', sans-serif;
-  }
-
-  input, textarea, select {
-    font-family: 'Outfit', sans-serif;
-  }
+  h1, h2, h3 { font-family: 'Syne', sans-serif; }
+  input, textarea, select { font-family: 'Outfit', sans-serif; }
 }
+
+/* ── Component classes ─────────────────────────────────────────────────────── */
 
 @layer components {
   .page {
     @apply min-h-screen pb-24 pt-4 px-4 md:pb-8 md:pt-6 md:px-8;
+    background-color: var(--bg-app);
+    color: var(--text-primary);
   }
-  
+
   .card {
-    @apply bg-[#111827] rounded-2xl border border-white/5;
+    background-color: var(--bg-card);
+    border-radius: 1rem;
+    border: 1px solid var(--border);
+    box-shadow: var(--card-shadow);
   }
-  
+
   .btn-primary {
     @apply bg-red-500 hover:bg-red-600 active:scale-95 text-white font-semibold
            rounded-xl px-5 py-3 transition-all duration-150 font-outfit;
   }
-  
+
   .btn-secondary {
-    @apply bg-white/10 hover:bg-white/15 active:scale-95 text-white font-semibold
-           rounded-xl px-5 py-3 transition-all duration-150;
+    background-color: var(--overlay-active);
+    color: var(--text-primary);
+    @apply active:scale-95 font-semibold rounded-xl px-5 py-3 transition-all duration-150;
   }
-  
+  .btn-secondary:hover { background-color: var(--overlay-active); filter: brightness(0.95); }
+
   .input-field {
-    @apply w-full bg-[#1A2540] border border-white/10 rounded-xl px-4 py-3
-           text-white placeholder-white/30 focus:outline-none focus:border-red-500/60
-           transition-colors text-sm;
+    width: 100%;
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-input);
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    outline: none;
+    transition: border-color 0.15s;
+    font-family: 'Outfit', sans-serif;
   }
-  
+  .input-field::placeholder { color: var(--text-placeholder); }
+  .input-field:focus { border-color: rgba(239, 68, 68, 0.6); }
+  .input-field option { background-color: var(--bg-card); color: var(--text-primary); }
+
   .badge-active {
-    @apply bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-semibold px-2.5 py-1 rounded-full;
+    @apply bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400
+           border border-red-500/30 text-xs font-semibold px-2.5 py-1 rounded-full;
   }
-  
   .badge-resolved {
-    @apply bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold px-2.5 py-1 rounded-full;
+    @apply bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400
+           border border-emerald-500/30 text-xs font-semibold px-2.5 py-1 rounded-full;
   }
-  
   .badge-review {
-    @apply bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-semibold px-2.5 py-1 rounded-full;
+    @apply bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400
+           border border-amber-500/30 text-xs font-semibold px-2.5 py-1 rounded-full;
   }
 }
 
-/* Scrollbar */
+/* ── Global light-mode overrides ───────────────────────────────────────────── */
+/* These remap Tailwind's white-based utilities so components work in          */
+/* light mode without needing individual file edits.                           */
+
+/* Text — map white/opacity utilities to readable light-mode equivalents */
+html:not(.dark) .text-white        { color: var(--text-primary)   !important; }
+html:not(.dark) .text-white\/80    { color: var(--text-primary)   !important; }
+html:not(.dark) .text-white\/70    { color: var(--text-secondary) !important; }
+html:not(.dark) .text-white\/60    { color: var(--text-secondary) !important; }
+html:not(.dark) .text-white\/50    { color: var(--text-muted)     !important; }
+html:not(.dark) .text-white\/40    { color: var(--text-muted)     !important; }
+html:not(.dark) .text-white\/35    { color: var(--text-muted)     !important; }
+html:not(.dark) .text-white\/30    { color: var(--text-muted)     !important; }
+html:not(.dark) .text-white\/25    { color: var(--text-placeholder) !important; }
+html:not(.dark) .text-white\/20    { color: var(--text-placeholder) !important; }
+
+html:not(.dark) .hover\:text-white:hover      { color: var(--text-primary)   !important; }
+html:not(.dark) .hover\:text-white\/70:hover  { color: var(--text-secondary) !important; }
+html:not(.dark) .hover\:text-white\/60:hover  { color: var(--text-muted)     !important; }
+
+/* Backgrounds */
+html:not(.dark) .bg-white\/5       { background-color: var(--overlay-hover)  !important; }
+html:not(.dark) .bg-white\/10      { background-color: var(--overlay-active) !important; }
+html:not(.dark) .bg-white\/15      { background-color: rgba(0,0,0,0.12)      !important; }
+
+html:not(.dark) .hover\:bg-white\/5:hover   { background-color: var(--overlay-hover)  !important; }
+html:not(.dark) .hover\:bg-white\/10:hover  { background-color: var(--overlay-active) !important; }
+html:not(.dark) .hover\:bg-white\/15:hover  { background-color: rgba(0,0,0,0.12)      !important; }
+
+/* Hardcoded dark hex backgrounds */
+html:not(.dark) .bg-\[\#080E1A\]    { background-color: var(--bg-app)     !important; }
+html:not(.dark) .bg-\[\#0D1526\]    { background-color: var(--bg-surface) !important; }
+html:not(.dark) .bg-\[\#111827\]    { background-color: var(--bg-card)    !important; }
+html:not(.dark) .bg-\[\#1A2540\]    { background-color: var(--bg-input)   !important; }
+
+/* Borders */
+html:not(.dark) .border-white\/5   { border-color: var(--border)       !important; }
+html:not(.dark) .border-white\/10  { border-color: var(--border-input) !important; }
+
+/* ── Scrollbar ─────────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: var(--border-input); border-radius: 2px; }
 
-/* Safe area on iOS */
+/* ── iOS safe area ─────────────────────────────────────────────────────────── */
 .pb-safe { padding-bottom: env(safe-area-inset-bottom, 16px); }
 
-/* Leaflet overrides */
-.leaflet-container { 
-  background: #111827 !important; 
+/* ── Leaflet map (dark mode only) ──────────────────────────────────────────── */
+.dark .leaflet-container {
+  background: #111827 !important;
   font-family: 'Outfit', sans-serif !important;
 }
-.leaflet-tile { filter: brightness(0.7) saturate(0.6); }
-.leaflet-popup-content-wrapper {
+.dark .leaflet-tile { filter: brightness(0.7) saturate(0.6); }
+.dark .leaflet-popup-content-wrapper {
   background: #111827 !important;
   color: #F1F5F9 !important;
   border: 1px solid rgba(255,255,255,0.1) !important;
   border-radius: 12px !important;
   box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
 }
-.leaflet-popup-tip { background: #111827 !important; }
-.leaflet-control-zoom a {
+.dark .leaflet-popup-tip { background: #111827 !important; }
+.dark .leaflet-control-zoom a {
   background: #111827 !important;
   color: #F1F5F9 !important;
   border-color: rgba(255,255,255,0.1) !important;

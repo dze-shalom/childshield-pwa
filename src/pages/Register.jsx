@@ -1,6 +1,6 @@
-﻿import { useState } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Shield, Mail, Lock, Eye, EyeOff, User, Phone, CheckCircle2, MessageSquare } from 'lucide-react'
+import { Shield, Mail, Lock, Eye, EyeOff, User, Phone, CheckCircle2, MessageSquare, RefreshCw } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 import { supabase } from '../lib/supabase'
 
@@ -25,6 +25,40 @@ export default function Register() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [emailSent, setEmailSent] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
+  const [resendStatus, setResendStatus] = useState('') // 'sent' | 'error'
+  const timerRef = useRef(null)
+
+  // Start 60-second cooldown whenever emailSent flips to true
+  useEffect(() => {
+    if (!emailSent) return
+    setResendCooldown(60)
+    timerRef.current = setInterval(() => {
+      setResendCooldown((s) => {
+        if (s <= 1) { clearInterval(timerRef.current); return 0 }
+        return s - 1
+      })
+    }, 1000)
+    return () => clearInterval(timerRef.current)
+  }, [emailSent])
+
+  const handleResend = async () => {
+    setResendStatus(''); setLoading(true)
+    try {
+      const { error } = await supabase.auth.resend({ type: 'signup', email: form.email })
+      if (error) throw error
+      setResendStatus('sent')
+      setResendCooldown(60)
+      timerRef.current = setInterval(() => {
+        setResendCooldown((s) => {
+          if (s <= 1) { clearInterval(timerRef.current); return 0 }
+          return s - 1
+        })
+      }, 1000)
+    } catch (err) {
+      setResendStatus('error')
+    } finally { setLoading(false) }
+  }
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value })
   const switchMode = (next) => { setMode(next); setStep(1); setError('') }
@@ -79,12 +113,39 @@ export default function Register() {
           <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-5">
             <CheckCircle2 size={28} className="text-emerald-400" />
           </div>
-          <h2 className="text-xl font-syne font-bold text-white mb-2">Check your email</h2>
-          <p className="text-white/40 text-sm mb-6 leading-relaxed">
+          <h2 className="text-xl font-syne font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+            Check your email
+          </h2>
+          <p className="text-sm mb-6 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
             We sent a confirmation link to{' '}
-            <span className="text-white/70 font-medium">{form.email}</span>.{' '}
-            Click it to activate your account.
+            <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>{form.email}</span>.{' '}
+            Click it to activate your account. Check your spam folder if you don't see it.
           </p>
+
+          {/* Resend */}
+          {resendStatus === 'sent' && (
+            <p className="text-emerald-500 text-sm mb-3">Confirmation email resent successfully.</p>
+          )}
+          {resendStatus === 'error' && (
+            <p className="text-red-500 text-sm mb-3">Could not resend. Try again shortly.</p>
+          )}
+
+          <button
+            onClick={handleResend}
+            disabled={resendCooldown > 0 || loading}
+            className="flex items-center gap-2 mx-auto mb-6 text-sm font-medium transition-colors"
+            style={{
+              color: resendCooldown > 0 ? 'var(--text-muted)' : '#EF4444',
+              cursor: resendCooldown > 0 ? 'default' : 'pointer',
+              background: 'none', border: 'none', padding: 0,
+            }}
+          >
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            {resendCooldown > 0
+              ? `Resend available in ${resendCooldown}s`
+              : 'Resend confirmation email'}
+          </button>
+
           <Link to="/login" className="btn-primary inline-block">Go to Login</Link>
         </div>
       </div>

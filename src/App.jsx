@@ -16,6 +16,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import ChildVoice from './pages/ChildVoice'
 import ProtectedRoute from './components/ProtectedRoute'
+import OfflineBanner from './components/OfflineBanner'
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
     <AppProvider>
       <LanguageProvider>
       <div className="min-h-screen flex" style={{ backgroundColor: 'var(--bg-app)' }}>
+        <OfflineBanner />
         <BottomNav />
         <main className="flex-1 md:ml-52 min-w-0">
           <Routes>

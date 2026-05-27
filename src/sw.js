@@ -1,6 +1,6 @@
 import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching'
 import { registerRoute } from 'workbox-routing'
-import { CacheFirst } from 'workbox-strategies'
+import { CacheFirst, NetworkFirst, StaleWhileRevalidate } from 'workbox-strategies'
 import { ExpirationPlugin } from 'workbox-expiration'
 
 // Injected by vite-plugin-pwa at build time
@@ -14,6 +14,22 @@ registerRoute(
     cacheName: 'map-tiles',
     plugins: [new ExpirationPlugin({ maxEntries: 200, maxAgeSeconds: 7 * 24 * 60 * 60 })],
   })
+)
+
+// Cache Supabase REST API responses — show last known data when offline
+registerRoute(
+  ({ url }) => url.hostname.includes('supabase.co') && url.pathname.startsWith('/rest/'),
+  new NetworkFirst({
+    cacheName: 'supabase-api',
+    networkTimeoutSeconds: 5,
+    plugins: [new ExpirationPlugin({ maxEntries: 50, maxAgeSeconds: 24 * 60 * 60 })],
+  })
+)
+
+// Cache Google Fonts and other static CDN assets
+registerRoute(
+  ({ url }) => url.origin === 'https://fonts.googleapis.com' || url.origin === 'https://fonts.gstatic.com',
+  new StaleWhileRevalidate({ cacheName: 'google-fonts' })
 )
 
 // ── Push notification handler ─────────────────────────────────────────────
@@ -43,4 +59,15 @@ self.addEventListener('notificationclick', (event) => {
       return clients.openWindow(target)
     })
   )
+})
+
+// ── Background sync — process offline submission queue ────────────────────
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'childshield-offline-queue') {
+    event.waitUntil(
+      clients.matchAll({ type: 'window' }).then((all) => {
+        all.forEach((client) => client.postMessage({ type: 'PROCESS_OFFLINE_QUEUE' }))
+      })
+    )
+  }
 })

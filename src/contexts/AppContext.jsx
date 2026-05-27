@@ -173,6 +173,46 @@ export function AppProvider({ children }) {
     )
   }, [])
 
+  // ── Offline cache helpers ─────────────────────────────────────────────────
+  const saveCache = (key, data) => { try { localStorage.setItem(key, JSON.stringify(data)) } catch {} }
+  const loadCache = (key) => { try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : null } catch { return null } }
+
+  // ── Offline submission queue ──────────────────────────────────────────────
+  const enqueueOffline = (type, payload) => {
+    const queue = loadCache('childshield_offline_queue') || []
+    queue.push({ type, payload, queuedAt: new Date().toISOString() })
+    saveCache('childshield_offline_queue', queue)
+    // Register background sync if supported
+    if ('serviceWorker' in navigator && 'SyncManager' in window) {
+      navigator.serviceWorker.ready.then(reg => reg.sync.register('childshield-offline-queue').catch(() => {}))
+    }
+  }
+
+  const processOfflineQueue = async () => {
+    const queue = loadCache('childshield_offline_queue') || []
+    if (!queue.length || !navigator.onLine) return
+    saveCache('childshield_offline_queue', []) // clear queue optimistically
+    for (const item of queue) {
+      try {
+        if (item.type === 'alert')     await supabase.from('alerts').insert([item.payload])
+        if (item.type === 'incident')  await supabase.from('incidents').insert([item.payload])
+        if (item.type === 'sighting')  await supabase.from('sightings').insert([item.payload])
+        if (item.type === 'found')     await supabase.from('found_children').insert([item.payload])
+      } catch { enqueueOffline(item.type, item.payload) } // re-queue on failure
+    }
+  }
+
+  // Listen for service worker telling us to process the queue (after background sync)
+  useEffect(() => {
+    const handler = (e) => { if (e.data?.type === 'PROCESS_OFFLINE_QUEUE') processOfflineQueue() }
+    navigator.serviceWorker?.addEventListener('message', handler)
+    window.addEventListener('online', processOfflineQueue)
+    return () => {
+      navigator.serviceWorker?.removeEventListener('message', handler)
+      window.removeEventListener('online', processOfflineQueue)
+    }
+  }, [])
+
   useEffect(() => {
     if (!CONFIGURED) {
       // Local dev — use mock data so the app works without Supabase credentials
@@ -181,15 +221,24 @@ export function AppProvider({ children }) {
       return
     }
 
+    // ── Load from localStorage cache first for instant display ────────────
+    const cachedAlerts = loadCache('childshield_alerts_cache')
+    const cachedFound  = loadCache('childshield_found_cache')
+    if (cachedAlerts) setAlerts(cachedAlerts)
+    if (cachedFound)  setFoundChildren(cachedFound)
+
     // ── Initial data fetch ────────────────────────────────────────────────
     Promise.all([
       supabase.from('alerts').select('*, sightings(*)').order('created_at', { ascending: false }),
       supabase.from('incidents').select('*').order('time', { ascending: false }),
       supabase.from('found_children').select('*').eq('status', 'searching').order('found_at', { ascending: false }),
     ]).then(([{ data: alertRows, error: ae }, { data: incRows, error: ie }, { data: foundRows, error: fe }]) => {
-      if (!ae && alertRows) setAlerts(alertRows.map(toAlert))
+      if (!ae && alertRows) { const a = alertRows.map(toAlert); setAlerts(a); saveCache('childshield_alerts_cache', a) }
       if (!ie && incRows)   setIncidents(incRows.map(toIncident))
-      if (!fe && foundRows) setFoundChildren(foundRows.map(toFoundChild))
+      if (!fe && foundRows) { const f = foundRows.map(toFoundChild); setFoundChildren(f); saveCache('childshield_found_cache', f) }
+      setLoading(false)
+    }).catch(() => {
+      // Network error — keep showing cached data, clear loading
       setLoading(false)
     })
 
@@ -275,23 +324,24 @@ export function AppProvider({ children }) {
       return newAlert
     }
 
-    const { data, error } = await supabase.from('alerts').insert([{
-      name: alert.name,
-      age: alert.age,
-      gender: alert.gender,
-      description: alert.description,
-      last_seen: alert.lastSeen,
-      last_seen_time: alert.lastSeenTime,
-      photo_url: alert.photo,
-      lat: alert.lat,
-      lng: alert.lng,
-      contact: alert.contact,
-      created_by: alert.createdBy,
-      user_id: user?.id || null,
-      status: 'active',
-      source: 'web',
-    }]).select().single()
+    const payload = {
+      name: alert.name, age: alert.age, gender: alert.gender,
+      description: alert.description, last_seen: alert.lastSeen,
+      last_seen_time: alert.lastSeenTime, photo_url: alert.photo,
+      lat: alert.lat, lng: alert.lng, contact: alert.contact,
+      created_by: alert.createdBy, user_id: user?.id || null,
+      status: 'active', source: 'web',
+    }
 
+    // Offline — queue for later and add to local state immediately
+    if (!navigator.onLine) {
+      const optimistic = { ...alert, id: `offline_${Date.now()}`, status: 'active', sightings: [], createdAt: new Date().toISOString(), userId: user?.id || null }
+      setAlerts((prev) => [optimistic, ...prev])
+      enqueueOffline('alert', payload)
+      return optimistic
+    }
+
+    const { data, error } = await supabase.from('alerts').insert([payload]).select().single()
     if (error) throw error
     const newAlert = { ...toAlert(data), sightings: [] }
     setAlerts((prev) => [newAlert, ...prev.filter((a) => a.id !== newAlert.id)])
@@ -336,18 +386,21 @@ export function AppProvider({ children }) {
       return
     }
 
-    const { data, error } = await supabase.from('incidents').insert([{
-      type: incident.type,
-      type_label: incident.typeLabel,
-      description: incident.description,
-      location: incident.location,
-      lat: incident.lat,
-      lng: incident.lng,
-      severity: incident.severity || 'medium',
-      status: 'under_review',
-      source: 'web',
-    }]).select().single()
+    const payload = {
+      type: incident.type, type_label: incident.typeLabel,
+      description: incident.description, location: incident.location,
+      lat: incident.lat, lng: incident.lng,
+      severity: incident.severity || 'medium', status: 'under_review', source: 'web',
+    }
 
+    if (!navigator.onLine) {
+      const optimistic = { ...incident, id: `offline_${Date.now()}`, status: 'under_review', time: new Date().toISOString() }
+      setIncidents((prev) => [optimistic, ...prev])
+      enqueueOffline('incident', payload)
+      return
+    }
+
+    const { data, error } = await supabase.from('incidents').insert([payload]).select().single()
     if (error) throw error
     const newIncident = toIncident(data)
     setIncidents((prev) => [newIncident, ...prev.filter((i) => i.id !== newIncident.id)])

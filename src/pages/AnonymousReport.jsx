@@ -1,15 +1,18 @@
 ﻿import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, X, Shield, CheckCircle2, Lock, AlertTriangle, User, Car, MapPin } from 'lucide-react'
+import { ArrowLeft, X, Shield, CheckCircle2, Lock, AlertTriangle, User, Car, MapPin, Zap, Briefcase, HeartOff } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 import { useLanguage } from '../contexts/LanguageContext'
 
 const INCIDENT_TYPES = [
-  { value: 'suspicious_person', label: 'Suspicious Person', desc: 'Someone acting suspiciously around children', icon: User },
-  { value: 'attempted_abduction', label: 'Attempted Abduction', desc: 'Someone tried to take or lure a child', icon: AlertTriangle },
-  { value: 'unsafe_area', label: 'Unsafe Area', desc: 'Area that poses regular danger to children', icon: MapPin },
-  { value: 'harassment', label: 'Child Harassment', desc: 'Children being harassed or threatened', icon: AlertTriangle },
-  { value: 'suspicious_vehicle', label: 'Suspicious Vehicle', desc: 'Vehicle acting suspiciously near children', icon: Car },
+  { value: 'suspicious_person',   label: 'Suspicious Person',        desc: 'Someone acting suspiciously around children',         icon: User },
+  { value: 'attempted_abduction', label: 'Attempted Abduction',      desc: 'Someone tried to take or lure a child',               icon: AlertTriangle },
+  { value: 'child_violence',      label: 'Child Physical Violence',   desc: 'A child being hit, beaten, or physically harmed',     icon: Zap },
+  { value: 'child_labour',        label: 'Child Labour / Exploitation', desc: 'Child forced to work, beg, or being exploited',    icon: Briefcase },
+  { value: 'neglect',             label: 'Child Neglect',             desc: 'Child without food, shelter, or proper care',         icon: HeartOff },
+  { value: 'unsafe_area',         label: 'Unsafe Area',               desc: 'Area that poses regular danger to children',          icon: MapPin },
+  { value: 'harassment',          label: 'Child Harassment',          desc: 'Children being harassed or threatened',               icon: AlertTriangle },
+  { value: 'suspicious_vehicle',  label: 'Suspicious Vehicle',        desc: 'Vehicle acting suspiciously near children',           icon: Car },
 ]
 
 const AREAS = [

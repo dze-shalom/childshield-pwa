@@ -13,14 +13,69 @@ const WHO_OPTIONS = [
   { id: 'teacher', label: 'I am a teacher or school staff', icon: BookOpen, color: '#10B981', bg: 'rgba(16,185,129,0.1)' },
 ]
 
-const INCIDENT_TYPES = [
-  { id: 'touch', label: 'Inappropriate touching or physical contact' },
-  { id: 'verbal', label: 'Sexual comments, threats or verbal harassment' },
-  { id: 'image', label: 'Forced to view or share sexual images' },
-  { id: 'rape', label: 'Rape or attempted rape' },
-  { id: 'online', label: 'Online sexual harassment or grooming' },
-  { id: 'other', label: 'Something else happened' },
+// ── Abuse type selection ───────────────────────────────────────────────────
+const ABUSE_TYPES = [
+  { id: 'sexual',   label: 'Sexual abuse or harassment',     desc: 'Unwanted sexual contact, comments, or exposure',          color: '#8B5CF6', bg: 'rgba(139,92,246,0.08)' },
+  { id: 'physical', label: 'Physical violence',              desc: 'Hitting, beating, corporal punishment, injury',            color: '#EF4444', bg: 'rgba(239,68,68,0.08)' },
+  { id: 'emotional',label: 'Emotional or psychological abuse',desc: 'Verbal humiliation, threats, isolation, manipulation',    color: '#3B82F6', bg: 'rgba(59,130,246,0.08)' },
+  { id: 'neglect',  label: 'Neglect',                        desc: 'No food, shelter, medical care, or education',            color: '#F59E0B', bg: 'rgba(245,158,11,0.08)' },
+  { id: 'labour',   label: 'Child labour or exploitation',   desc: 'Forced work, domestic servitude, begging, trafficking',   color: '#10B981', bg: 'rgba(16,185,129,0.08)' },
+  { id: 'marriage', label: 'Forced or early marriage',       desc: 'Married or engaged without consent, under pressure',      color: '#EC4899', bg: 'rgba(236,72,153,0.08)' },
 ]
+
+// ── Incident types per abuse category ─────────────────────────────────────
+const INCIDENTS_BY_TYPE = {
+  sexual: [
+    { id: 'touch',   label: 'Inappropriate touching or physical contact' },
+    { id: 'verbal',  label: 'Sexual comments, threats or verbal harassment' },
+    { id: 'image',   label: 'Forced to view or share sexual images' },
+    { id: 'rape',    label: 'Rape or attempted rape' },
+    { id: 'online',  label: 'Online sexual harassment or grooming' },
+    { id: 'other',   label: 'Something else happened' },
+  ],
+  physical: [
+    { id: 'hitting',    label: 'Hitting, slapping, or punching' },
+    { id: 'beating',    label: 'Severe beating or whipping' },
+    { id: 'corporal',   label: 'Corporal punishment at school or home' },
+    { id: 'object',     label: 'Injured with an object or weapon' },
+    { id: 'burning',    label: 'Burning or scalding' },
+    { id: 'confinement',label: 'Locked up or physically restrained' },
+  ],
+  emotional: [
+    { id: 'humiliation', label: 'Constant insults, name-calling or humiliation' },
+    { id: 'threats',     label: 'Threats of harm, death or abandonment' },
+    { id: 'isolation',   label: 'Isolated from friends, family or school' },
+    { id: 'witness',     label: 'Forced to witness violence against others' },
+    { id: 'control',     label: 'Extreme control, monitoring or manipulation' },
+    { id: 'rejection',   label: 'Constant rejection, ignoring or shaming' },
+  ],
+  neglect: [
+    { id: 'food',     label: 'Not enough food or clean water' },
+    { id: 'shelter',  label: 'No shelter or unsafe living conditions' },
+    { id: 'medical',  label: 'Denied medical care when sick or injured' },
+    { id: 'school',   label: 'Not allowed to attend school' },
+    { id: 'alone',    label: 'Left alone or unsupervised for long periods' },
+    { id: 'hygiene',  label: 'Denied basic hygiene or clothing' },
+  ],
+  labour: [
+    { id: 'farm',       label: 'Forced to work long hours on a farm' },
+    { id: 'domestic',   label: 'Domestic servitude in someone else\'s home' },
+    { id: 'begging',    label: 'Forced to beg or sell on the streets' },
+    { id: 'denied_edu', label: 'Denied education because of work demands' },
+    { id: 'trafficking',label: 'Trafficked or transported for labour or exploitation' },
+    { id: 'soldiers',   label: 'Recruited or used by an armed group' },
+  ],
+  marriage: [
+    { id: 'engaged',   label: 'Engaged or married without personal consent' },
+    { id: 'prevented', label: 'Prevented from leaving or refusing a marriage' },
+    { id: 'bride',     label: 'Bride price exchanged for a child' },
+    { id: 'threatened',label: 'Threatened or pressured into agreeing to marriage' },
+    { id: 'school',    label: 'Taken out of school to prepare for marriage' },
+  ],
+}
+
+// Keep for backwards compatibility — used when no type selected
+const INCIDENT_TYPES = INCIDENTS_BY_TYPE.sexual
 
 const PERPETRATORS = [
   'Family member or relative',
@@ -57,6 +112,7 @@ export default function AbuseReport() {
   const { addIncident } = useApp()
   const { t } = useLanguage()
   const [step, setStep] = useState('landing')
+  const [abuseType, setAbuseType] = useState('')
   const [who, setWho] = useState('')
   const [incidents, setIncidents] = useState([])
   const [note, setNote] = useState('')
@@ -64,19 +120,33 @@ export default function AbuseReport() {
   const [location, setLocation] = useState('')
   const [submitted, setSubmitted] = useState(false)
 
+  const activeIncidentTypes = INCIDENTS_BY_TYPE[abuseType] || INCIDENT_TYPES
+  const activeAbuseType = ABUSE_TYPES.find(t => t.id === abuseType)
+  const accentColor = activeAbuseType?.color || '#8B5CF6'
+  const accentBg = activeAbuseType?.bg || 'rgba(139,92,246,0.08)'
+
   const toggleIncident = (id) => setIncidents(p => p.includes(id) ? p.filter(i => i !== id) : [...p, id])
 
   const handleSubmit = () => {
-    const incidentLabels = incidents.map(id => INCIDENT_TYPES.find(t => t.id === id)?.label).filter(Boolean)
+    const incidentLabels = incidents.map(id => activeIncidentTypes.find(t => t.id === id)?.label).filter(Boolean)
+    const typeLabel = {
+      sexual:   'Sexual Abuse / Harassment',
+      physical: 'Child Physical Violence',
+      emotional:'Emotional / Psychological Abuse',
+      neglect:  'Child Neglect',
+      labour:   'Child Labour / Exploitation',
+      marriage: 'Forced or Early Marriage',
+    }[abuseType] || 'Child Abuse'
     const description = [
+      `Abuse type: ${typeLabel}`,
       `Reporter: ${WHO_OPTIONS.find(o => o.id === who)?.label || who}`,
       `Incident types: ${incidentLabels.join(', ')}`,
       note && `Details: ${note}`,
       perpetrator && `Perpetrator: ${perpetrator}`,
     ].filter(Boolean).join(' | ')
     addIncident({
-      type: 'sexual_abuse',
-      typeLabel: 'Sexual Abuse / Harassment',
+      type: abuseType || 'abuse',
+      typeLabel,
       description,
       location,
       severity: 'critical',
@@ -184,7 +254,7 @@ export default function AbuseReport() {
           </div>
 
           {[
-            { id: 'who', label: 'Report sexual abuse or harassment', desc: 'Confidential report — takes 3 minutes', icon: FileText, color: '#8B5CF6', bg: 'rgba(139,92,246,0.07)', border: 'rgba(139,92,246,0.22)' },
+            { id: 'abuse_type', label: 'Report child abuse or violence', desc: 'Sexual, physical, neglect, labour — all forms covered', icon: FileText, color: '#8B5CF6', bg: 'rgba(139,92,246,0.07)', border: 'rgba(139,92,246,0.22)' },
             { id: 'support', label: 'Find support and resources', desc: 'Hospitals, NGOs, legal help near me', icon: Heart, color: '#EC4899', bg: 'rgba(236,72,153,0.07)', border: 'rgba(236,72,153,0.22)' },
             { id: 'understand', label: 'Understand what happened', desc: 'What counts as abuse? What are my rights?', icon: Lightbulb, color: '#10B981', bg: 'rgba(16,185,129,0.07)', border: 'rgba(16,185,129,0.22)' },
           ].map(opt => (
@@ -200,6 +270,38 @@ export default function AbuseReport() {
               <ArrowLeft size={14} color={opt.color} style={{ transform: 'rotate(180deg)', flexShrink: 0 }} />
             </button>
           ))}
+        </div>
+      )}
+
+      {/* ABUSE TYPE */}
+      {step === 'abuse_type' && (
+        <div>
+          <h2 style={{ color: 'var(--text-primary)', fontSize: 15, fontWeight: 700, marginBottom: 4 }}>What type of abuse are you reporting?</h2>
+          <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 16, lineHeight: 1.5 }}>
+            All forms of child abuse are serious. Choose the one that best describes the situation.
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+            {ABUSE_TYPES.map(opt => (
+              <button key={opt.id} onClick={() => { setAbuseType(opt.id); setIncidents([]) }}
+                style={{ background: abuseType === opt.id ? opt.bg : 'var(--bg-card)', border: `1px solid ${abuseType === opt.id ? opt.color + '55' : 'var(--border)'}`, borderRadius: 14, padding: 12, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', textAlign: 'left' }}>
+                <div style={{ width: 10, height: 10, borderRadius: '50%', background: abuseType === opt.id ? opt.color : 'var(--border)', flexShrink: 0, marginLeft: 2 }} />
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 13, fontWeight: abuseType === opt.id ? 700 : 400, color: abuseType === opt.id ? 'var(--text-primary)' : 'var(--text-secondary)', margin: '0 0 1px' }}>{opt.label}</p>
+                  <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>{opt.desc}</p>
+                </div>
+                {abuseType === opt.id && <div style={{ width: 9, height: 9, background: opt.color, borderRadius: '50%', flexShrink: 0 }} />}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => setStep('landing')} className="btn-secondary" style={{ flex: 1, fontSize: 12, padding: '10px' }}>Back</button>
+            <button onClick={() => { if (abuseType) setStep('who') }}
+              style={{ flex: 2, background: abuseType ? accentColor : accentColor + '33', border: 'none', borderRadius: 12, padding: '10px', color: abuseType ? '#fff' : accentColor + '88', fontWeight: 700, fontSize: 13, cursor: abuseType ? 'pointer' : 'default' }}>
+              Continue
+            </button>
+          </div>
         </div>
       )}
 
@@ -243,7 +345,7 @@ export default function AbuseReport() {
 
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={() => setStep('landing')} className="btn-secondary" style={{ flex: 1, fontSize: 12, padding: '10px' }}>Back</button>
-            <button onClick={() => { if (who) setStep('what') }} style={{ flex: 2, background: who ? '#8B5CF6' : 'rgba(139,92,246,0.15)', border: 'none', borderRadius: 12, padding: '10px', color: who ? '#fff' : 'rgba(139,92,246,0.4)', fontWeight: 700, fontSize: 13, cursor: who ? 'pointer' : 'default' }}>
+            <button onClick={() => { if (who) setStep('what') }} style={{ flex: 2, background: who ? accentColor : accentColor + '33', border: 'none', borderRadius: 12, padding: '10px', color: who ? '#fff' : accentColor, fontWeight: 700, fontSize: 13, cursor: who ? 'pointer' : 'default' }}>
               Continue
             </button>
           </div>
@@ -257,12 +359,12 @@ export default function AbuseReport() {
           <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 14, lineHeight: 1.5 }}>Only share what you are comfortable with. Even a few words help. There are no wrong answers.</p>
 
           <p style={{ fontSize: 10, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600, marginBottom: 8 }}>Type of incident (select all that apply)</p>
-          {INCIDENT_TYPES.map(opt => {
+          {activeIncidentTypes.map(opt => {
             const selected = incidents.includes(opt.id)
             return (
               <button key={opt.id} onClick={() => toggleIncident(opt.id)}
-                style={{ width: '100%', background: selected ? 'rgba(139,92,246,0.08)' : '#111827', border: `1px solid ${selected ? 'rgba(139,92,246,0.4)' : 'var(--border)'}`, borderRadius: 12, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: 6, textAlign: 'left' }}>
-                <div style={{ width: 18, height: 18, borderRadius: 5, border: `2px solid ${selected ? '#8B5CF6' : 'rgba(255,255,255,0.2)'}`, background: selected ? '#8B5CF6' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                style={{ width: '100%', background: selected ? accentBg : 'var(--bg-card)', border: `1px solid ${selected ? accentColor + '66' : 'var(--border)'}`, borderRadius: 12, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: 6, textAlign: 'left' }}>
+                <div style={{ width: 18, height: 18, borderRadius: 5, border: `2px solid ${selected ? accentColor : 'var(--border-input)'}`, background: selected ? accentColor : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   {selected && <CheckCircle2 size={10} color="#fff" />}
                 </div>
                 <span style={{ fontSize: 12, color: selected ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: selected ? 600 : 400 }}>{opt.label}</span>
@@ -286,7 +388,7 @@ export default function AbuseReport() {
 
           <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
             <button onClick={() => setStep('who')} className="btn-secondary" style={{ flex: 1, fontSize: 12, padding: '10px' }}>Back</button>
-            <button onClick={() => { if (incidents.length > 0) setStep('where') }} style={{ flex: 2, background: incidents.length > 0 ? '#8B5CF6' : 'rgba(139,92,246,0.15)', border: 'none', borderRadius: 12, padding: '10px', color: incidents.length > 0 ? '#fff' : 'rgba(139,92,246,0.4)', fontWeight: 700, fontSize: 13, cursor: incidents.length > 0 ? 'pointer' : 'default' }}>
+            <button onClick={() => { if (incidents.length > 0) setStep('where') }} style={{ flex: 2, background: incidents.length > 0 ? accentColor : accentColor + '33', border: 'none', borderRadius: 12, padding: '10px', color: incidents.length > 0 ? '#fff' : accentColor, fontWeight: 700, fontSize: 13, cursor: incidents.length > 0 ? 'pointer' : 'default' }}>
               Continue
             </button>
           </div>
@@ -301,9 +403,9 @@ export default function AbuseReport() {
 
           {LOCATIONS.map(loc => (
             <button key={loc} onClick={() => setLocation(location === loc ? '' : loc)}
-              style={{ width: '100%', background: location === loc ? 'rgba(139,92,246,0.08)' : '#111827', border: `1px solid ${location === loc ? 'rgba(139,92,246,0.4)' : 'var(--border)'}`, borderRadius: 12, padding: '10px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', marginBottom: 7 }}>
+              style={{ width: '100%', background: location === loc ? accentBg : 'var(--bg-card)', border: `1px solid ${location === loc ? accentColor + '55' : 'var(--border)'}`, borderRadius: 12, padding: '10px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', marginBottom: 7 }}>
               <span style={{ fontSize: 13, color: location === loc ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: location === loc ? 600 : 400 }}>{loc}</span>
-              {location === loc && <div style={{ width: 9, height: 9, background: '#8B5CF6', borderRadius: '50%' }} />}
+              {location === loc && <div style={{ width: 9, height: 9, background: accentColor, borderRadius: '50%' }} />}
             </button>
           ))}
 
@@ -314,7 +416,7 @@ export default function AbuseReport() {
 
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={() => setStep('what')} className="btn-secondary" style={{ flex: 1, fontSize: 12, padding: '10px' }}>Back</button>
-            <button onClick={() => { if (location) handleSubmit() }} style={{ flex: 2, background: location ? '#8B5CF6' : 'rgba(139,92,246,0.15)', border: 'none', borderRadius: 12, padding: '10px', color: location ? '#fff' : 'rgba(139,92,246,0.4)', fontWeight: 700, fontSize: 13, cursor: location ? 'pointer' : 'default' }}>
+            <button onClick={() => { if (location) handleSubmit() }} style={{ flex: 2, background: location ? accentColor : accentColor + '33', border: 'none', borderRadius: 12, padding: '10px', color: location ? '#fff' : accentColor, fontWeight: 700, fontSize: 13, cursor: location ? 'pointer' : 'default' }}>
               {t('abuse','submit')}
             </button>
           </div>

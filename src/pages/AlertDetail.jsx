@@ -18,9 +18,10 @@ const FOUND_METHODS = [
 export default function AlertDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { alerts, addSighting, resolveAlert, user } = useApp()
+  const { alerts, addSighting, resolveAlert, user, loading } = useApp()
   const { t } = useLanguage()
-  const alert = alerts.find((a) => a.id === id)
+  // String() coercion guards against integer vs string ID mismatch (Supabase vs URL param)
+  const alert = alerts.find((a) => String(a.id) === String(id))
   const a = useTranslatedAlert(alert) // translated description, lastSeen, gender
   const distance = alert ? distanceFromCoords(alert.lat, alert.lng) : null
   // Only the user who created the alert can mark it as found
@@ -35,6 +36,13 @@ export default function AlertDetail() {
   const [foundMessage, setFoundMessage] = useState('')
   const [foundConfirmed, setFoundConfirmed] = useState(false)
   const [photoCopied, setPhotoCopied] = useState(false)
+
+  // Still fetching from Supabase — don't show "not found" prematurely
+  if (loading) return (
+    <div className="page flex items-center justify-center">
+      <div className="w-8 h-8 rounded-full border-2 border-white/10 border-t-white/60 animate-spin" />
+    </div>
+  )
 
   if (!alert) return (
     <div className="page flex items-center justify-center">

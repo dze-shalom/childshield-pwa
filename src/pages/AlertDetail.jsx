@@ -6,6 +6,7 @@ import { useApp } from '../contexts/AppContext'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useTranslatedAlert } from '../hooks/useTranslatedAlert'
 import { distanceFromCoords } from '../lib/distance'
+import ShareSheet from '../components/ShareSheet'
 
 const FOUND_METHODS = [
   'Child came home on their own',
@@ -39,7 +40,7 @@ export default function AlertDetail() {
   const [foundMethod, setFoundMethod] = useState('')
   const [foundMessage, setFoundMessage] = useState('')
   const [foundConfirmed, setFoundConfirmed] = useState(false)
-  const [photoCopied, setPhotoCopied] = useState(false)
+  const [showShare, setShowShare] = useState(false)
 
   // Still fetching from Supabase — don't show "not found" prematurely
   if (loading) return (
@@ -59,37 +60,9 @@ export default function AlertDetail() {
     ? format(new Date(alert.lastSeenTime), 'EEEE, dd MMM yyyy · HH:mm')
     : t('detail','timeNotRec')
 
-  const shareMessage = () => {
-    const url = `${window.location.origin}/alert/${alert.id}`
-    const time = alert.lastSeenTime ? format(new Date(alert.lastSeenTime), 'dd MMM yyyy, HH:mm') : t('detail', 'timeNotRec')
-    return `🚨 *${t('share','missingTitle')}*\n\n*${t('share','platform')}*\n\n👤 *${t('share','name')}:* ${alert.name}\n🎂 *${t('share','age')}:* ${alert.age} ${t('share','yearsOld')} (${alert.gender})\n📍 *${t('share','lastSeen')}:* ${alert.lastSeen}\n🕐 *${t('share','time')}:* ${time}\n👗 *${t('share','description')}:* ${alert.description}\n\n📞 *${t('share','contact')}:* ${alert.contact}\n\n🔗 ${t('share','reportLink')}:\n${url}\n\n_${t('share','appeal')}_\n_${t('share','footer')}_`
-  }
-
-  const dataUrlToBlob = (dataUrl) => {
-    const [header, base64] = dataUrl.split(',')
-    const mime = header.match(/:(.*?);/)[1]
-    const binary = atob(base64)
-    const bytes = new Uint8Array(binary.length)
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-    return new Blob([bytes], { type: mime })
-  }
-
-  const handleShare = async () => {
-    const message = shareMessage()
-
-    // Open WhatsApp with the full message text pre-filled (must happen first to avoid popup blocker)
-    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank')
-
-    // Then copy the photo to clipboard so the user can attach it via WhatsApp's 📎 button
-    if (alert.photo) {
-      try {
-        const blob = dataUrlToBlob(alert.photo)
-        await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })])
-        setPhotoCopied(true)
-        setTimeout(() => setPhotoCopied(false), 8000)
-      } catch (_) {}
-    }
-  }
+  const alertUrl = `${window.location.origin}/alert/${alert.id}`
+  const time = alert.lastSeenTime ? format(new Date(alert.lastSeenTime), 'dd MMM yyyy, HH:mm') : t('detail', 'timeNotRec')
+  const shareMsg = `🚨 *${t('share','missingTitle')}*\n\n*${t('share','platform')}*\n\n👤 *${t('share','name')}:* ${alert.name}\n🎂 *${t('share','age')}:* ${alert.age} ${t('share','yearsOld')} (${alert.gender})\n📍 *${t('share','lastSeen')}:* ${alert.lastSeen}\n🕐 *${t('share','time')}:* ${time}\n👗 *${t('share','description')}:* ${alert.description}\n\n📞 *${t('share','contact')}:* ${alert.contact}\n\n🔗 ${t('share','reportLink')}:\n${alertUrl}\n\n_${t('share','appeal')}_\n_${t('share','footer')}_`
 
   const handleSightingSubmit = () => {
     if (!sighting.location || !sighting.description) return
@@ -113,18 +86,13 @@ export default function AlertDetail() {
         </button>
         <h1 className="font-syne font-bold text-white text-lg flex-1">{t('detail','title')}</h1>
         {alert.status === 'active' && (
-          <button onClick={handleShare} className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600/20 rounded-xl text-emerald-400 text-sm font-medium">
+          <button onClick={() => setShowShare(true)} className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600/20 rounded-xl text-emerald-400 text-sm font-medium">
             <Share2 size={14} />
             {t('detail','share')}
           </button>
         )}
       </div>
 
-      {photoCopied && (
-        <div style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 10, padding: '8px 12px', marginBottom: 12, fontSize: 12, color: '#10B981', textAlign: 'center' }}>
-          {t('alert', 'photoCopied')}
-        </div>
-      )}
       {/* Status Banner */}
       <div className={`card p-3 mb-4 border ${statusBg} text-center`}>
         <p className={`font-syne font-bold text-sm ${statusText}`}>{statusLabel}</p>
@@ -266,7 +234,7 @@ export default function AlertDetail() {
 
       {/* WhatsApp Share CTA */}
       {alert.status === 'active' && (
-        <button onClick={handleShare} className="w-full card p-4 mb-4 flex items-center gap-4 hover:border-emerald-500/30 transition-all bg-emerald-500/5 border-emerald-500/20">
+        <button onClick={() => setShowShare(true)} className="w-full card p-4 mb-4 flex items-center gap-4 hover:border-emerald-500/30 transition-all bg-emerald-500/5 border-emerald-500/20">
           <div className="w-10 h-10 bg-emerald-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
             <Share2 size={20} className="text-emerald-400" />
           </div>
@@ -345,6 +313,14 @@ export default function AlertDetail() {
         )}
       </section>
 
+      <ShareSheet
+        open={showShare}
+        onClose={() => setShowShare(false)}
+        message={shareMsg}
+        url={alertUrl}
+        photo={alert.photo}
+        title={`Missing Child: ${alert.name}`}
+      />
     </div>
   )
 }

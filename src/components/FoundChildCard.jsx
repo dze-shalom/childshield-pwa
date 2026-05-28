@@ -4,15 +4,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useTranslatedFoundChild } from '../hooks/useTranslatedFoundChild'
 import { distanceFromLocationText } from '../lib/distance'
-
-const dataUrlToBlob = (dataUrl) => {
-  const [header, base64] = dataUrl.split(',')
-  const mime = header.match(/:(.*?);/)[1]
-  const binary = atob(base64)
-  const bytes = new Uint8Array(binary.length)
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-  return new Blob([bytes], { type: mime })
-}
+import ShareSheet from './ShareSheet'
 
 export default function FoundChildCard({ found }) {
   const { t } = useLanguage()
@@ -21,38 +13,21 @@ export default function FoundChildCard({ found }) {
   const timeAgo = f.foundAt
     ? formatDistanceToNow(new Date(f.foundAt), { addSuffix: true })
     : ''
-  const [photoCopied, setPhotoCopied] = useState(false)
+  const [showShare, setShowShare] = useState(false)
 
-  const handleShare = async (e) => {
-    e.preventDefault()
-    const url = window.location.origin
-    const gender = f.gender
-      ? (found.gender === 'Female' ? t('found', 'girl') : t('found', 'boy'))
-      : t('found', 'unknown')
-    const msg =
-      `🟡 *${t('share', 'platform')}*\n\n` +
-      `*FOUND CHILD — HELP IDENTIFY*\n\n` +
-      (f.name ? `🏷️ *Child's name:* ${f.name}\n` : '') +
-      `👶 *${t('share', 'description')}:* ${f.description}\n` +
-      `📍 *${t('share', 'lastSeen')}:* ${f.location}\n` +
-      (f.ageEstimate ? `🎂 *${t('share', 'age')}:* ${f.ageEstimate}\n` : '') +
-      (f.gender ? `👤 *${gender}*\n` : '') +
-      `\n📞 *${t('share', 'contact')}:* ${f.contact}\n\n` +
-      `_${t('share', 'footer')}_\n${url}`
-
-    // Open WhatsApp with the full message text pre-filled (must happen first to avoid popup blocker)
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank')
-
-    // Then copy the photo to clipboard so the user can attach it via WhatsApp's 📎 button
-    if (f.photo) {
-      try {
-        const blob = dataUrlToBlob(f.photo)
-        await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })])
-        setPhotoCopied(true)
-        setTimeout(() => setPhotoCopied(false), 8000)
-      } catch (_) {}
-    }
-  }
+  const gender = f.gender
+    ? (found.gender === 'Female' ? t('found', 'girl') : t('found', 'boy'))
+    : t('found', 'unknown')
+  const shareMsg =
+    `🟡 *${t('share', 'platform')}*\n\n` +
+    `*FOUND CHILD — HELP IDENTIFY*\n\n` +
+    (f.name ? `🏷️ *Child's name:* ${f.name}\n` : '') +
+    `👶 *${t('share', 'description')}:* ${f.description}\n` +
+    `📍 *${t('share', 'lastSeen')}:* ${f.location}\n` +
+    (f.ageEstimate ? `🎂 *${t('share', 'age')}:* ${f.ageEstimate}\n` : '') +
+    (f.gender ? `👤 *${gender}*\n` : '') +
+    `\n📞 *${t('share', 'contact')}:* ${f.contact}\n\n` +
+    `_${t('share', 'footer')}_\n${window.location.origin}`
 
   return (
     <div style={{
@@ -136,7 +111,7 @@ export default function FoundChildCard({ found }) {
           <Phone size={13} />{f.contact}
         </a>
         <button
-          onClick={handleShare}
+          onClick={() => setShowShare(true)}
           style={{
             display: 'flex', alignItems: 'center', gap: 5,
             padding: '8px 12px',
@@ -147,6 +122,14 @@ export default function FoundChildCard({ found }) {
           <Share2 size={13} />{t('card', 'share')}
         </button>
       </div>
+
+      <ShareSheet
+        open={showShare}
+        onClose={() => setShowShare(false)}
+        message={shareMsg}
+        photo={f.photo}
+        title="Found Child — Help Identify"
+      />
     </div>
   )
 }

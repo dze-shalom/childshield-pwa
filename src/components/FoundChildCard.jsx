@@ -93,11 +93,6 @@ export default function FoundChildCard({ found }) {
 
       <div style={{ height: 1, background: 'rgba(245,158,11,0.15)', margin: '12px 0' }} />
 
-      {photoCopied && (
-        <div style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 8, padding: '6px 10px', marginBottom: 8, fontSize: 11, color: '#10B981', textAlign: 'center' }}>
-          {t('alert', 'photoCopied')}
-        </div>
-      )}
       <div style={{ display: 'flex', gap: 8 }}>
         <a
           href={`tel:${f.contact}`}

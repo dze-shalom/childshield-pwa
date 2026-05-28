@@ -1,4 +1,4 @@
-﻿import { useState, useRef } from 'react'
+﻿import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Camera, Phone, CheckCircle2, X, User, AlertCircle } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
@@ -28,6 +28,11 @@ export default function FoundChildReport() {
   const [matches, setMatches] = useState(null)
   const [notified, setNotified] = useState([])
   const [photoPreview, setPhotoPreview] = useState(null)
+  const previewUrlRef = useRef(null)
+
+  useEffect(() => {
+    return () => { if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current) }
+  }, [])
 
   const [form, setForm] = useState({
     name: '', description: '', ageEstimate: '', gender: '',
@@ -38,13 +43,13 @@ export default function FoundChildReport() {
   const handlePhoto = async (e) => {
     const file = e.target.files[0]
     if (!file) return
-    // Show preview instantly, compress in background
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
     const objectUrl = URL.createObjectURL(file)
+    previewUrlRef.current = objectUrl
     setPhotoPreview(objectUrl)
     const compressed = await compressImage(file)
-    URL.revokeObjectURL(objectUrl)
-    setPhotoPreview(compressed)
     update('photo', compressed)
+    // Keep objectUrl as the visible preview — no flicker, no second render
   }
 
   // Submit → save → auto-match → auto-notify parents
@@ -124,7 +129,7 @@ export default function FoundChildReport() {
             {photoPreview
               ? <div className="relative">
                   <img src={photoPreview} alt="Found child" className="w-24 h-24 rounded-2xl object-cover" />
-                  <button onClick={() => { setPhotoPreview(null); update('photo', null) }}
+                  <button onClick={() => { if (previewUrlRef.current) { URL.revokeObjectURL(previewUrlRef.current); previewUrlRef.current = null } setPhotoPreview(null); update('photo', null) }}
                     className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
                     <X size={12} className="text-white" />
                   </button>

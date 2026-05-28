@@ -1,6 +1,6 @@
-﻿import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Camera, MapPin, Phone, User, AlertCircle, CheckCircle2, X, Loader2 } from 'lucide-react'
+import { ArrowLeft, Camera, MapPin, Phone, AlertCircle, CheckCircle2, X } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 import { useLanguage } from '../contexts/LanguageContext'
 import { supabase } from '../lib/supabase'
@@ -24,13 +24,13 @@ export default function NewAlert() {
   const navigate = useNavigate()
   const { addAlert } = useApp()
   const { t } = useLanguage()
-  const [step, setStep] = useState(1) // 1: child info, 2: location, 3: contact
+  const [step, setStep] = useState(1)
   const [submitted, setSubmitted] = useState(false)
   const [submittedId, setSubmittedId] = useState(null)
   const [photoPreview, setPhotoPreview] = useState(null)
-  const [photoChecking, setPhotoChecking] = useState(false)
-  const [photoDuplicate, setPhotoDuplicate] = useState(null) // { id, name } of conflicting alert
+  const [photoDuplicate, setPhotoDuplicate] = useState(null)
   const fileInputRef = useRef(null)
+  const previewUrlRef = useRef(null) // track objectUrl so we can revoke it later
   const [form, setForm] = useState({
     name: '', age: '', gender: '', description: '',
     lastSeen: '', customLocation: '', contact: '', createdBy: '',
@@ -39,25 +39,33 @@ export default function NewAlert() {
 
   const update = (key, val) => setForm((f) => ({ ...f, [key]: val }))
 
+  // Revoke any objectUrl when the component unmounts
+  useEffect(() => {
+    return () => {
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
+    }
+  }, [])
+
   const handlePhotoSelect = async (e) => {
     const file = e.target.files[0]
     if (!file) return
 
     setPhotoDuplicate(null)
 
-    // Show preview instantly — don't make the user wait for network
+    // Revoke previous objectUrl if any
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
+
+    // Show preview instantly — stays as objectUrl for the life of the form
     const objectUrl = URL.createObjectURL(file)
+    previewUrlRef.current = objectUrl
     setPhotoPreview(objectUrl)
 
-    // Hash + compress run in parallel in the background
+    // Compress + hash in parallel in the background
     const [hash, compressed] = await Promise.all([hashFile(file), compressImage(file)])
     update('photo', compressed)
     update('photoHash', hash)
-    URL.revokeObjectURL(objectUrl)
-    setPhotoPreview(compressed)
 
-    // Duplicate check — runs after preview is already shown
-    setPhotoChecking(true)
+    // Duplicate check runs silently — no spinner shown
     const { data: existing } = await supabase
       .from('alerts')
       .select('id, name')
@@ -65,11 +73,12 @@ export default function NewAlert() {
       .eq('status', 'active')
       .maybeSingle()
       .catch(() => ({ data: null }))
-    setPhotoChecking(false)
 
     if (existing) {
       setPhotoDuplicate(existing)
       setPhotoPreview(null)
+      URL.revokeObjectURL(objectUrl)
+      previewUrlRef.current = null
       update('photo', null)
       update('photoHash', null)
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -77,6 +86,10 @@ export default function NewAlert() {
   }
 
   const clearPhoto = () => {
+    if (previewUrlRef.current) {
+      URL.revokeObjectURL(previewUrlRef.current)
+      previewUrlRef.current = null
+    }
     setPhotoPreview(null)
     setPhotoDuplicate(null)
     update('photo', null)
@@ -140,7 +153,6 @@ export default function NewAlert() {
       {step === 1 && (
         <div className="space-y-4 animate-fade-up">
           <div className="card p-4 flex flex-col items-center gap-3 border-dashed border-white/10">
-            {/* sr-only input with label — works on iOS Safari unlike display:none + .click() */}
             <input
               ref={fileInputRef}
               id="child-photo-input"
@@ -164,11 +176,6 @@ export default function NewAlert() {
                 <Camera size={24} className="text-white/30" />
                 <span className="text-white/30 text-xs">Photo</span>
               </label>
-            )}
-            {photoChecking && (
-              <div className="flex items-center gap-2 text-white/40 text-xs">
-                <Loader2 size={12} className="animate-spin" /> Checking photo…
-              </div>
             )}
             <p className="text-white/40 text-xs text-center">{t('alert','photoHint')}</p>
             <label htmlFor="child-photo-input" className="btn-secondary text-sm py-2 px-4 cursor-pointer">

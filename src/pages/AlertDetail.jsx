@@ -132,8 +132,8 @@ export default function AlertDetail() {
                     await resolveAlert(alert.id)
                     setFoundConfirmed(true)
                     setShowFoundForm(false)
-                  } catch {
-                    alert('You can only mark alerts that you created as found.')
+                  } catch (err) {
+                    window.alert(err?.message || 'Could not mark alert as found. Please try again.')
                   }
                 }} style={{ flex: 2, background: foundMethod ? '#10B981' : 'rgba(16,185,129,0.15)', border: 'none', borderRadius: 12, padding: '10px', color: foundMethod ? '#fff' : 'rgba(16,185,129,0.4)', fontWeight: 700, fontSize: 13, cursor: foundMethod ? 'pointer' : 'default' }}>
                   ✅ {t('detail','confirmFound')}

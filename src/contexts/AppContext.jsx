@@ -445,7 +445,11 @@ export function AppProvider({ children }) {
     }
     const { data, error } = await query.select('id')
     if (error) throw error
-    if (!data?.length) throw new Error('Unauthorized: you can only resolve alerts you created')
+    // Only enforce server-side ownership for logged-in creators — anonymous alerts
+    // rely on the localStorage isOwner check already done before calling this function
+    if (alertInState?.userId && user?.id && !data?.length) {
+      throw new Error('Unauthorized: you can only resolve alerts you created')
+    }
     setAlerts((prev) => prev.map((a) => a.id === alertId ? { ...a, status: 'resolved', resolvedAt } : a))
   }
 

@@ -29,7 +29,7 @@ export default function FoundChildReport() {
   const [photoPreview, setPhotoPreview] = useState(null)
 
   const [form, setForm] = useState({
-    description: '', ageEstimate: '', gender: '',
+    name: '', description: '', ageEstimate: '', gender: '',
     location: '', currentLocation: '', contact: '', photo: null,
   })
   const update = (k, v) => setForm(f => ({ ...f, [k]: v }))
@@ -48,6 +48,7 @@ export default function FoundChildReport() {
     setLoading(true)
 
     await addFoundChild({
+      name: form.name || null,
       description: form.description,
       ageEstimate: form.ageEstimate,
       gender: form.gender,
@@ -60,7 +61,7 @@ export default function FoundChildReport() {
       const res = await fetch('/api/match', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ found: form }),
+        body: JSON.stringify({ found: { ...form, name: form.name || null } }),
       })
       if (!res.ok) throw new Error(`API error ${res.status}`)
       const data = await res.json()
@@ -139,6 +140,14 @@ export default function FoundChildReport() {
             <textarea className="input-field resize-none" rows={4}
               placeholder={t('found','descPH')}
               value={form.description} onChange={e => update('description', e.target.value)} />
+          </div>
+
+          <div>
+            <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">
+              Child's Name <span className="text-white/25 normal-case tracking-normal">(if child told you — optional)</span>
+            </label>
+            <input className="input-field" placeholder="e.g. Emmanuel, Amina…"
+              value={form.name} onChange={e => update('name', e.target.value)} />
           </div>
 
           <div className="grid grid-cols-2 gap-3">

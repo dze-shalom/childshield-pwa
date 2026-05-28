@@ -31,6 +31,7 @@ const CONFIGURED =
 
 const toFoundChild = (row) => ({
   id: row.id,
+  name: row.name || null,
   description: row.description,
   ageEstimate: row.age_estimate,
   gender: row.gender,
@@ -435,6 +436,7 @@ export function AppProvider({ children }) {
       return
     }
     const { data, error } = await supabase.from('found_children').insert([{
+      name: found.name || null,
       description: found.description,
       age_estimate: found.ageEstimate,
       gender: found.gender,

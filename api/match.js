@@ -14,6 +14,10 @@ async function compareWithGroq(alert, found) {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), GROQ_TIMEOUT_MS)
 
+  const foundNameLine = found.name
+    ? `Name (child said): ${found.name}`
+    : `Name: not provided`
+
   try {
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -29,7 +33,23 @@ async function compareWithGroq(alert, found) {
         messages: [
           {
             role: 'system',
-            content: 'You are a child safety matching assistant. Compare two child descriptions and return ONLY a valid JSON object — no markdown, no explanation outside the JSON.',
+            content: `You are a child safety matching assistant for Cameroon. Compare a missing child alert with a found child report and decide if they are likely the same child.
+
+SCORING RULES:
+- If the found child provided a name AND it matches (or is similar/shortened form of) the missing child's name → this is VERY strong evidence; confidence should be 80–95% unless other details clearly conflict.
+- If gender is explicitly provided for both and they are different → return match "no", confidence ≤ 10.
+- Age within 2 years → supporting evidence. Age difference > 4 years → weakening evidence.
+- Description similarities (clothing, height, features) → supporting evidence.
+- Location proximity → mild supporting evidence.
+- "Unknown" gender or age means no conflict, not a mismatch.
+
+CONFIDENCE GUIDE:
+- 80–100 → high (name match + consistent details)
+- 55–79 → medium (strong partial match without name, or name match with some detail uncertainty)
+- 40–54 → low (weak partial match)
+- < 40 → no match
+
+Return ONLY valid JSON, no markdown:`,
           },
           {
             role: 'user',
@@ -41,13 +61,14 @@ Description: ${alert.description}
 Last seen: ${alert.last_seen}
 
 FOUND CHILD REPORT:
+${foundNameLine}
 Approximate age: ${found.ageEstimate || 'unknown'}
 Gender: ${found.gender || 'unknown'}
 Description: ${found.description}
 Location found: ${found.location}
 
-Are these likely the same child? Respond with ONLY:
-{"match":"high"|"medium"|"low"|"no","confidence":0-100,"reason":"one sentence"}`,
+Respond with ONLY:
+{"match":"high"|"medium"|"low"|"no","confidence":0-100,"reason":"one sentence explaining the key evidence"}`,
           },
         ],
       }),
@@ -78,13 +99,14 @@ async function notifyParent(alert, found) {
   const digits = alert.contact.replace(/\s+/g, '').replace(/^00/, '+')
   const to = digits.startsWith('+') ? `whatsapp:${digits}` : `whatsapp:+${digits}`
 
+  const nameHint = found.name ? `\n🏷️ *Child said their name is:* ${found.name}` : ''
   const body =
 `🔔 *ChildShield — Possible Match Found*
 
 Someone has reported finding a child that matches your missing alert for *${alert.name}*.
 
 📍 *Found at:* ${found.location}
-👶 *Description given:* ${found.description}
+👶 *Description given:* ${found.description}${nameHint}
 
 📞 *Contact the finder now:* ${found.contact}
 

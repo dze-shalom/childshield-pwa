@@ -1,8 +1,5 @@
 // ChildVoice WhatsApp Bot — ChildShield Cameroon
 // Powered by Groq (free) + Twilio WhatsApp + Supabase
-//
-// Deploy to: Railway, Render, or any Node.js host (free tier)
-// Twilio webhook URL: https://your-app.railway.app/webhook
 
 const express = require('express')
 const twilio = require('twilio')
@@ -27,8 +24,6 @@ const supabase = createClient(
 //     session     JSONB NOT NULL,
 //     updated_at  TIMESTAMPTZ DEFAULT NOW()
 //   );
-//
-// Enable RLS but grant service role full access (default behaviour).
 
 const getSession = async (phone) => {
   const { data } = await supabase
@@ -50,8 +45,8 @@ const clearSession = async (phone) => {
 }
 
 // ── Twilio webhook signature validation ──────────────────────────────────────
-// Set WEBHOOK_URL=https://your-app.railway.app in production.
-// If unset (local dev / ngrok without URL set), validation is skipped.
+// Set WEBHOOK_URL=https://your-app.onrender.com in production.
+// Skipped when WEBHOOK_URL is not set (local dev).
 const validateTwilio = (req, res, next) => {
   if (!process.env.WEBHOOK_URL) return next()
 
@@ -71,6 +66,27 @@ const validateTwilio = (req, res, next) => {
     )
   }
   next()
+}
+
+// ── Photo helper: download from Twilio, encode as base64 data URL ─────────────
+// Twilio media URLs require Basic auth to fetch.
+// We store the result as a data URL so it works the same as PWA-uploaded photos.
+const fetchAndEncodePhoto = async (mediaUrl) => {
+  try {
+    const sid   = process.env.TWILIO_ACCOUNT_SID
+    const token = process.env.TWILIO_AUTH_TOKEN
+    const res = await fetch(mediaUrl, {
+      headers: {
+        Authorization: 'Basic ' + Buffer.from(`${sid}:${token}`).toString('base64'),
+      },
+    })
+    if (!res.ok) return null
+    const buffer = await res.arrayBuffer()
+    const contentType = res.headers.get('content-type') || 'image/jpeg'
+    return `data:${contentType};base64,${Buffer.from(buffer).toString('base64')}`
+  } catch {
+    return null
+  }
 }
 
 // ── Language detection ───────────────────────────────────────────────────────
@@ -110,39 +126,6 @@ const callGroq = async (systemPrompt, userMessage, lang = 'en') => {
   return data.choices?.[0]?.message?.content?.trim() || 'Sorry, please try again.'
 }
 
-// ── Extract structured data from free text using Groq ────────────────────────
-const extractAlertData = async (conversationText) => {
-  const prompt = `Extract child safety alert information from this conversation and return ONLY a JSON object with these fields:
-  { "name": "", "age": "", "gender": "", "description": "", "lastSeen": "", "contact": "" }
-  If a field is not mentioned, leave it empty. Do not add any explanation.`
-
-  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'llama-3.1-8b-instant',
-      max_tokens: 300,
-      temperature: 0,
-      messages: [
-        { role: 'system', content: prompt },
-        { role: 'user', content: conversationText }
-      ]
-    })
-  })
-
-  const data = await response.json()
-  const text = data.choices?.[0]?.message?.content?.trim() || '{}'
-  try {
-    const clean = text.replace(/```json|```/g, '').trim()
-    return JSON.parse(clean)
-  } catch {
-    return {}
-  }
-}
-
 // ── Save alert to Supabase ────────────────────────────────────────────────────
 const saveAlert = async (alertData, phone) => {
   const { data, error } = await supabase
@@ -154,6 +137,8 @@ const saveAlert = async (alertData, phone) => {
       description: alertData.description || '',
       last_seen: alertData.lastSeen || '',
       contact: alertData.contact || phone,
+      photo_url: alertData.photoUrl || null,
+      photo_consent: !!alertData.photoUrl, // consent given by submitting
       status: 'active',
       source: 'bot',
       created_at: new Date().toISOString(),
@@ -184,6 +169,8 @@ const saveIncident = async (incidentData, phone) => {
 }
 
 // ── Message templates ─────────────────────────────────────────────────────────
+const WEBAPP_URL = process.env.WEBAPP_URL || 'https://childshield.cm'
+
 const MSG = {
   en: {
     greeting: `*ChildShield ChildVoice* 🛡️\n\nHello! I'm here to help keep children safe in Cameroon.\n\nReply with:\n*1* - Report a missing child\n*2* - Report suspicious activity\n*3* - I need help urgently\n*4* - Find nearest safe zone`,
@@ -191,7 +178,27 @@ const MSG = {
     incidentType: `What type of incident are you reporting?\n\n*1* - Suspicious person near children\n*2* - Abuse or neglect\n*3* - Child trafficking concern\n*4* - Other`,
     emergencyNumbers: `🚨 *Emergency Numbers*\n\n📞 *17* - Police\n📞 *16* - Gendarmerie\n📞 *18* - Fire & Rescue\n📞 *+237 222 22 40 40* - Child Protection Hotline\n\nIf you are in immediate danger, call 17 now.`,
     safeZones: `📍 *Nearest Safe Zones*\n\n🚔 Buea Central Police: +237 233 32 22 22\n🏥 Buea Regional Hospital: +237 233 32 23 45\n🤝 RENATA Child Protection: +237 677 888 999\n\n🚔 Limbe Central Police: +237 233 33 22 11\n🏥 Limbe Regional Hospital: +237 233 33 23 56`,
-    alertSent: (name) => `🚨 *Alert sent to ChildShield!*\n\n✅ Alert for *${name}* is now live on the platform\n✅ Community guardians in your area have been notified\n✅ Nearest police station has been pinged\n\nTrack sightings here:\n🔗 childshield.cm\n\nI will notify you the moment someone reports a sighting. Stay near your phone.`,
+    photoPrompt: (name) => `Please send a photo of *${name}* now.\n\nNo photo? Reply *skip* to continue without one.`,
+    alertSent: (name, id) =>
+`🚨 *Alert is LIVE on ChildShield!*
+
+Community guardians in your area have been notified.
+
+━━━━━━━━━━━━━━━━━━━━
+📢 *FORWARD THIS MESSAGE:*
+
+🚨 *MISSING CHILD ALERT*
+*ChildShield Cameroon* 🛡️
+
+👤 *Name:* ${name}
+🔗 *Full alert + photo:*
+${WEBAPP_URL}/alert/${id}
+
+_If you see this child, please call the contact on the alert immediately._
+_ChildShield — Community Child Safety, Cameroon_
+━━━━━━━━━━━━━━━━━━━━
+
+Copy and forward the message above to all your WhatsApp groups.`,
     incidentSaved: `✅ *Report received anonymously*\n\nA community moderator will review this within 2 hours.\n\nIf this is happening right now, call *17* (Police) immediately.\n\nThank you for keeping children safe. 🛡️`,
     confirmAlert: (summary) => `✅ *Alert Summary*\n\n${summary}\n\nReply *YES* to send this alert to the community, or *EDIT* to change something.`,
   },
@@ -201,7 +208,27 @@ const MSG = {
     incidentType: `Quel type d'incident signalez-vous?\n\n*1* - Personne suspecte près d'enfants\n*2* - Abus ou négligence\n*3* - Préoccupation de traite d'enfants\n*4* - Autre`,
     emergencyNumbers: `🚨 *Numéros d'urgence*\n\n📞 *17* - Police\n📞 *16* - Gendarmerie\n📞 *18* - Pompiers\n📞 *+237 222 22 40 40* - Protection de l'Enfance\n\nSi vous êtes en danger immédiat, appelez le 17 maintenant.`,
     safeZones: `📍 *Zones Sûres les Plus Proches*\n\n🚔 Police Centrale Buea: +237 233 32 22 22\n🏥 Hôpital Régional Buea: +237 233 32 23 45\n🤝 RENATA Protection Enfance: +237 677 888 999\n\n🚔 Police Centrale Limbe: +237 233 33 22 11\n🏥 Hôpital Régional Limbe: +237 233 33 23 56`,
-    alertSent: (name) => `🚨 *Alerte envoyée à ChildShield!*\n\n✅ L'alerte pour *${name}* est maintenant en direct\n✅ Les gardiens communautaires de votre zone ont été notifiés\n✅ Le poste de police le plus proche a été informé\n\nSuivez les signalements ici:\n🔗 childshield.cm`,
+    photoPrompt: (name) => `Veuillez envoyer une photo de *${name}* maintenant.\n\nPas de photo? Répondez *passer* pour continuer sans photo.`,
+    alertSent: (name, id) =>
+`🚨 *Alerte EN DIRECT sur ChildShield!*
+
+Les gardiens communautaires de votre zone ont été notifiés.
+
+━━━━━━━━━━━━━━━━━━━━
+📢 *TRANSFÉREZ CE MESSAGE:*
+
+🚨 *ALERTE ENFANT DISPARU*
+*ChildShield Cameroun* 🛡️
+
+👤 *Nom:* ${name}
+🔗 *Alerte complète + photo:*
+${WEBAPP_URL}/alert/${id}
+
+_Si vous voyez cet enfant, appelez le contact sur l'alerte immédiatement._
+_ChildShield — Sécurité des Enfants, Cameroun_
+━━━━━━━━━━━━━━━━━━━━
+
+Copiez et transférez ce message dans tous vos groupes WhatsApp.`,
     incidentSaved: `✅ *Rapport reçu anonymement*\n\nUn modérateur communautaire examinera ceci dans 2 heures.\n\nSi cela se passe maintenant, appelez le *17* (Police) immédiatement.\n\nMerci de protéger les enfants. 🛡️`,
     confirmAlert: (summary) => `✅ *Résumé de l'alerte*\n\n${summary}\n\nRépondez *OUI* pour envoyer cette alerte à la communauté, ou *MODIFIER* pour changer quelque chose.`,
   }
@@ -213,7 +240,8 @@ const INCIDENT_TYPES = {
 }
 
 // ── Main conversation handler ─────────────────────────────────────────────────
-const handleMessage = async (phone, message) => {
+// media = { numMedia, mediaUrl, mediaContentType } extracted from the Twilio POST body
+const handleMessage = async (phone, message, media = {}) => {
   const text = message.trim()
   const session = await getSession(phone)
   const lang = session.lang || detectLanguage(text)
@@ -286,10 +314,28 @@ const handleMessage = async (phone, message) => {
   if (session.step === 'missing_contact') {
     session.data.contact = text
     session.data.conversation.push(`Contact: ${text}`)
+    await setSession(phone, { ...session, step: 'missing_photo' })
+    return t.photoPrompt(session.data.name)
+  }
+
+  // ── PHOTO STEP ─────────────────────────────────────────────────────────────
+  if (session.step === 'missing_photo') {
+    const skipped = ['skip', 'passer', 'no', 'non', 'none'].includes(text.toLowerCase())
+
+    if (media.numMedia > 0 && media.mediaUrl) {
+      // Fetch and encode the photo from Twilio
+      const photoData = await fetchAndEncodePhoto(media.mediaUrl)
+      session.data.photoUrl = photoData || null
+    } else if (!skipped) {
+      // They sent text but not a skip command — remind them
+      return lang === 'fr'
+        ? `Envoyez une photo ou répondez *passer* pour continuer sans photo.`
+        : `Please send a photo or reply *skip* to continue without one.`
+    }
 
     const summary = lang === 'fr'
-      ? `👧 *Nom:* ${session.data.name}\n🎂 *Age:* ${session.data.age}\n📍 *Vu en dernier:* ${session.data.lastSeen}\n👗 *Description:* ${session.data.description}\n📞 *Contact:* ${session.data.contact}`
-      : `👧 *Name:* ${session.data.name}\n🎂 *Age:* ${session.data.age}\n📍 *Last seen:* ${session.data.lastSeen}\n👗 *Description:* ${session.data.description}\n📞 *Contact:* ${session.data.contact}`
+      ? `👧 *Nom:* ${session.data.name}\n🎂 *Age:* ${session.data.age}\n📍 *Vu en dernier:* ${session.data.lastSeen}\n👗 *Description:* ${session.data.description}\n📞 *Contact:* ${session.data.contact}${session.data.photoUrl ? '\n📸 *Photo:* ✅ reçue' : '\n📸 *Photo:* aucune'}`
+      : `👧 *Name:* ${session.data.name}\n🎂 *Age:* ${session.data.age}\n📍 *Last seen:* ${session.data.lastSeen}\n👗 *Description:* ${session.data.description}\n📞 *Contact:* ${session.data.contact}${session.data.photoUrl ? '\n📸 *Photo:* ✅ received' : '\n📸 *Photo:* none'}`
 
     await setSession(phone, { ...session, step: 'missing_confirm' })
     return t.confirmAlert(summary)
@@ -298,12 +344,14 @@ const handleMessage = async (phone, message) => {
   if (session.step === 'missing_confirm') {
     if (['yes', 'oui'].includes(text.toLowerCase())) {
       try {
-        await saveAlert(session.data, phone)
+        const saved = await saveAlert(session.data, phone)
         await clearSession(phone)
-        return t.alertSent(session.data.name)
+        return t.alertSent(session.data.name, saved.id)
       } catch (err) {
         console.error('Save alert error:', err)
-        return 'Alert saved locally. Please also call 17 to notify police.'
+        return lang === 'fr'
+          ? 'Alerte sauvegardée localement. Appelez aussi le 17 pour notifier la police.'
+          : 'Alert saved locally. Please also call 17 to notify police.'
       }
     }
     if (['edit', 'modifier'].includes(text.toLowerCase())) {
@@ -360,16 +408,21 @@ app.post('/webhook', validateTwilio, async (req, res) => {
   const twiml = new twilio.twiml.MessagingResponse()
 
   try {
-    const phone = req.body.From
-    const message = req.body.Body
+    const phone   = req.body.From
+    const message = req.body.Body || ''
+    const media   = {
+      numMedia:         parseInt(req.body.NumMedia || '0'),
+      mediaUrl:         req.body.MediaUrl0 || null,
+      mediaContentType: req.body.MediaContentType0 || null,
+    }
 
-    if (!phone || !message) {
+    if (!phone) {
       twiml.message('Invalid request.')
       return res.type('text/xml').send(twiml.toString())
     }
 
-    console.log(`[${phone}] Received: ${message}`)
-    const reply = await handleMessage(phone, message)
+    console.log(`[${phone}] Received: ${message || '(media)'}${media.numMedia > 0 ? ` + ${media.numMedia} media` : ''}`)
+    const reply = await handleMessage(phone, message, media)
     console.log(`[${phone}] Replied: ${reply.slice(0, 80)}...`)
 
     twiml.message(reply)

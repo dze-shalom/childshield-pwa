@@ -36,29 +36,25 @@ export default function ShareSheet({ open, onClose, message, url, photo, title }
 
   const handleWhatsApp = async () => {
     onClose()
-    // Try native share with photo + text — on modern Android + WhatsApp this
-    // attaches the photo automatically with the message as the caption.
-    if (photo && navigator.share) {
+
+    // iOS Safari passes text to native share sheet but WhatsApp drops it when
+    // a file is also included — only the photo arrives. Skip file sharing on iOS
+    // and use wa.me which reliably pre-fills the full message on all platforms.
+    const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+
+    if (!isIOS && photo && navigator.canShare) {
       try {
         const blob = dataUrlToBlob(photo)
         const file = new File([blob], 'alert-photo.jpg', { type: blob.type })
-        if (navigator.canShare?.({ files: [file] })) {
+        if (navigator.canShare({ files: [file] })) {
           await navigator.share({ title: title || 'ChildShield Alert', text: message, files: [file] })
           return
         }
       } catch (_) {}
     }
-    // Text-only native share (no photo or file sharing not supported)
-    if (navigator.share) {
-      try { await navigator.share({ title: title || 'ChildShield Alert', text: message, url }); return } catch (_) {}
-    }
-    // Last resort: wa.me with text + copy photo to clipboard
-    if (photo) {
-      try {
-        const blob = dataUrlToBlob(photo)
-        await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })])
-      } catch (_) {}
-    }
+
+    // wa.me opens WhatsApp with the full message pre-filled (works on iOS + Android)
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank')
   }
 

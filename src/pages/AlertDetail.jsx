@@ -40,7 +40,6 @@ export default function AlertDetail() {
   const [foundMessage, setFoundMessage] = useState('')
   const [foundConfirmed, setFoundConfirmed] = useState(false)
   const [photoCopied, setPhotoCopied] = useState(false)
-  const [msgCopied, setMsgCopied] = useState(false)
 
   // Still fetching from Supabase — don't show "not found" prematurely
   if (loading) return (
@@ -78,38 +77,18 @@ export default function AlertDetail() {
   const handleShare = async () => {
     const message = shareMessage()
 
-    // Try Web Share API with photo
-    // NOTE: WhatsApp drops the 'text' field when files are attached, so we
-    // pre-copy the message text to clipboard and remind the user to paste it.
-    if (alert.photo && navigator.share) {
-      try {
-        const blob = dataUrlToBlob(alert.photo)
-        const file = new File([blob], `missing-${alert.name.replace(/\s+/g, '-')}.jpg`, { type: blob.type })
-        if (navigator.canShare?.({ files: [file] })) {
-          try { await navigator.clipboard.writeText(message) } catch (_) {}
-          await navigator.share({ title: `Missing Child: ${alert.name}`, text: message, files: [file] })
-          setMsgCopied(true)
-          setTimeout(() => setMsgCopied(false), 8000)
-          return
-        }
-      } catch (_) {}
-    }
+    // Open WhatsApp with the full message text pre-filled (must happen first to avoid popup blocker)
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank')
 
-    // Web Share API without photo — text goes through fine
-    if (navigator.share) {
-      try { await navigator.share({ title: `Missing Child: ${alert.name}`, text: message }); return } catch (_) {}
-    }
-
-    // Fallback: copy photo to clipboard then open WhatsApp with text pre-filled
+    // Then copy the photo to clipboard so the user can attach it via WhatsApp's 📎 button
     if (alert.photo) {
       try {
         const blob = dataUrlToBlob(alert.photo)
         await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })])
         setPhotoCopied(true)
-        setTimeout(() => setPhotoCopied(false), 5000)
+        setTimeout(() => setPhotoCopied(false), 8000)
       } catch (_) {}
     }
-    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank')
   }
 
   const handleSightingSubmit = () => {
@@ -146,12 +125,6 @@ export default function AlertDetail() {
           {t('alert', 'photoCopied')}
         </div>
       )}
-      {msgCopied && (
-        <div style={{ background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 10, padding: '8px 12px', marginBottom: 12, fontSize: 12, color: '#60A5FA', textAlign: 'center' }}>
-          {t('alert', 'msgCopied')}
-        </div>
-      )}
-
       {/* Status Banner */}
       <div className={`card p-3 mb-4 border ${statusBg} text-center`}>
         <p className={`font-syne font-bold text-sm ${statusText}`}>{statusLabel}</p>

@@ -38,7 +38,11 @@ export default function FoundChildReport() {
   const handlePhoto = async (e) => {
     const file = e.target.files[0]
     if (!file) return
+    // Show preview instantly, compress in background
+    const objectUrl = URL.createObjectURL(file)
+    setPhotoPreview(objectUrl)
     const compressed = await compressImage(file)
+    URL.revokeObjectURL(objectUrl)
     setPhotoPreview(compressed)
     update('photo', compressed)
   }

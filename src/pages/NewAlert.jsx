@@ -43,32 +43,37 @@ export default function NewAlert() {
     const file = e.target.files[0]
     if (!file) return
 
-    setPhotoChecking(true)
     setPhotoDuplicate(null)
 
-    const hash = await hashFile(file)
+    // Show preview instantly — don't make the user wait for network
+    const objectUrl = URL.createObjectURL(file)
+    setPhotoPreview(objectUrl)
 
-    // Check Supabase for an active alert already using this exact photo
+    // Hash + compress run in parallel in the background
+    const [hash, compressed] = await Promise.all([hashFile(file), compressImage(file)])
+    update('photo', compressed)
+    update('photoHash', hash)
+    URL.revokeObjectURL(objectUrl)
+    setPhotoPreview(compressed)
+
+    // Duplicate check — runs after preview is already shown
+    setPhotoChecking(true)
     const { data: existing } = await supabase
       .from('alerts')
       .select('id, name')
       .eq('photo_hash', hash)
       .eq('status', 'active')
       .maybeSingle()
-      .catch(() => ({ data: null })) // If column doesn't exist yet, ignore
-
+      .catch(() => ({ data: null }))
     setPhotoChecking(false)
 
     if (existing) {
       setPhotoDuplicate(existing)
+      setPhotoPreview(null)
+      update('photo', null)
+      update('photoHash', null)
       if (fileInputRef.current) fileInputRef.current.value = ''
-      return
     }
-
-    update('photoHash', hash)
-    const compressed = await compressImage(file)
-    setPhotoPreview(compressed)
-    update('photo', compressed)
   }
 
   const clearPhoto = () => {

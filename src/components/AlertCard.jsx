@@ -16,6 +16,16 @@ const SourceTag = ({ source }) => source === 'bot'
   ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: 'rgba(18,140,126,0.15)', border: '1px solid rgba(18,140,126,0.3)', borderRadius: 99, padding: '1px 7px', fontSize: 9, fontWeight: 700, color: '#128C7E' }}><MessageSquare size={7} /> WhatsApp Bot</span>
   : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: 99, padding: '1px 7px', fontSize: 9, fontWeight: 700, color: '#3B82F6' }}><Wifi size={7} /> App</span>
 
+// Convert a base64 data URL to a Blob without using fetch (works on all browsers)
+const dataUrlToBlob = (dataUrl) => {
+  const [header, base64] = dataUrl.split(',')
+  const mime = header.match(/:(.*?);/)[1]
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+  return new Blob([bytes], { type: mime })
+}
+
 export default function AlertCard({ alert }) {
   const { t } = useLanguage()
   const a = useTranslatedAlert(alert)
@@ -30,11 +40,10 @@ export default function AlertCard({ alert }) {
     const url = `${window.location.origin}/alert/${a.id}`
     const message = `🚨 *${t('share','missingTitle')}*\n\n*${t('share','platform')}*\n\n👤 *${t('share','name')}:* ${a.name}\n🎂 *${t('share','age')}:* ${a.age} ${t('share','yearsOld')} (${a.gender})\n📍 *${t('share','lastSeen')}:* ${a.lastSeen}\n👗 *${t('share','description')}:* ${a.description}\n\n📞 *${t('share','contact')}:* ${a.contact || 'See link below'}\n\n🔗 ${t('share','reportLink')}:\n${url}\n\n_${t('share','appeal')}_\n_${t('share','footer')}_`
 
-    // Try Web Share API with photo (works on mobile/PWA)
-    if (a.photo && a.photoConsent && navigator.share) {
+    // Try Web Share API with photo (works on Android/iOS PWA)
+    if (a.photo && navigator.share) {
       try {
-        const res = await fetch(a.photo)
-        const blob = await res.blob()
+        const blob = dataUrlToBlob(a.photo)
         const file = new File([blob], `missing-${a.name.replace(/\s+/g, '-')}.jpg`, { type: blob.type })
         if (navigator.canShare?.({ files: [file] })) {
           await navigator.share({ title: `Missing Child: ${a.name}`, text: message, files: [file] })
@@ -48,11 +57,10 @@ export default function AlertCard({ alert }) {
       try { await navigator.share({ title: `Missing Child: ${a.name}`, text: message }); return } catch (_) {}
     }
 
-    // Fallback: copy photo to clipboard, then open WhatsApp text link
-    if (a.photo && a.photoConsent) {
+    // Fallback: copy photo to clipboard then open WhatsApp
+    if (a.photo) {
       try {
-        const res = await fetch(a.photo)
-        const blob = await res.blob()
+        const blob = dataUrlToBlob(a.photo)
         await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })])
         setPhotoCopied(true)
         setTimeout(() => setPhotoCopied(false), 5000)

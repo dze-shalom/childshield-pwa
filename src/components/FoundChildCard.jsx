@@ -1,18 +1,29 @@
-﻿import { Phone, MapPin, Clock, Share2, Navigation } from 'lucide-react'
+﻿import { useState } from 'react'
+import { Phone, MapPin, Clock, Share2, Navigation } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useTranslatedFoundChild } from '../hooks/useTranslatedFoundChild'
 import { distanceFromLocationText } from '../lib/distance'
 
+const dataUrlToBlob = (dataUrl) => {
+  const [header, base64] = dataUrl.split(',')
+  const mime = header.match(/:(.*?);/)[1]
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+  return new Blob([bytes], { type: mime })
+}
+
 export default function FoundChildCard({ found }) {
   const { t } = useLanguage()
-  const f = useTranslatedFoundChild(found) // translated description, location, gender
+  const f = useTranslatedFoundChild(found)
   const distance = distanceFromLocationText(found.location)
   const timeAgo = f.foundAt
     ? formatDistanceToNow(new Date(f.foundAt), { addSuffix: true })
     : ''
+  const [photoCopied, setPhotoCopied] = useState(false)
 
-  const handleShare = (e) => {
+  const handleShare = async (e) => {
     e.preventDefault()
     const url = window.location.origin
     const gender = f.gender
@@ -27,6 +38,33 @@ export default function FoundChildCard({ found }) {
       (f.gender ? `👤 *${gender}*\n` : '') +
       `\n📞 *${t('share', 'contact')}:* ${f.contact}\n\n` +
       `_${t('share', 'footer')}_\n${url}`
+
+    // Try Web Share API with photo (works on Android/iOS PWA)
+    if (f.photo && navigator.share) {
+      try {
+        const blob = dataUrlToBlob(f.photo)
+        const file = new File([blob], 'found-child.jpg', { type: blob.type })
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({ title: 'Found Child — Help Identify', text: msg, files: [file] })
+          return
+        }
+      } catch (_) {}
+    }
+
+    // Web Share API without photo
+    if (navigator.share) {
+      try { await navigator.share({ title: 'Found Child — Help Identify', text: msg }); return } catch (_) {}
+    }
+
+    // Fallback: copy photo to clipboard then open WhatsApp
+    if (f.photo) {
+      try {
+        const blob = dataUrlToBlob(f.photo)
+        await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })])
+        setPhotoCopied(true)
+        setTimeout(() => setPhotoCopied(false), 5000)
+      } catch (_) {}
+    }
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
@@ -93,6 +131,12 @@ export default function FoundChildCard({ found }) {
       </div>
 
       <div style={{ height: 1, background: 'rgba(245,158,11,0.15)', margin: '12px 0' }} />
+
+      {photoCopied && (
+        <div style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 8, padding: '6px 10px', marginBottom: 8, fontSize: 11, color: '#10B981', textAlign: 'center' }}>
+          {t('alert', 'photoCopied')}
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: 8 }}>
         <a

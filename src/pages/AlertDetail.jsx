@@ -53,15 +53,22 @@ export default function AlertDetail() {
     return `🚨 *${t('share','missingTitle')}*\n\n*${t('share','platform')}*\n\n👤 *${t('share','name')}:* ${alert.name}\n🎂 *${t('share','age')}:* ${alert.age} ${t('share','yearsOld')} (${alert.gender})\n📍 *${t('share','lastSeen')}:* ${alert.lastSeen}\n🕐 *${t('share','time')}:* ${time}\n👗 *${t('share','description')}:* ${alert.description}\n\n📞 *${t('share','contact')}:* ${alert.contact}\n\n🔗 ${t('share','reportLink')}:\n${url}\n\n_${t('share','appeal')}_\n_${t('share','footer')}_`
   }
 
+  const dataUrlToBlob = (dataUrl) => {
+    const [header, base64] = dataUrl.split(',')
+    const mime = header.match(/:(.*?);/)[1]
+    const binary = atob(base64)
+    const bytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+    return new Blob([bytes], { type: mime })
+  }
+
   const handleShare = async () => {
     const message = shareMessage()
-    const canSharePhoto = alert.photo && alert.photoConsent
 
-    // Try Web Share API with photo (works on mobile/PWA)
-    if (canSharePhoto && navigator.share) {
+    // Try Web Share API with photo (works on Android/iOS PWA)
+    if (alert.photo && navigator.share) {
       try {
-        const res = await fetch(alert.photo)
-        const blob = await res.blob()
+        const blob = dataUrlToBlob(alert.photo)
         const file = new File([blob], `missing-${alert.name.replace(/\s+/g, '-')}.jpg`, { type: blob.type })
         if (navigator.canShare?.({ files: [file] })) {
           await navigator.share({ title: `Missing Child: ${alert.name}`, text: message, files: [file] })
@@ -75,11 +82,10 @@ export default function AlertDetail() {
       try { await navigator.share({ title: `Missing Child: ${alert.name}`, text: message }); return } catch (_) {}
     }
 
-    // Fallback: copy photo to clipboard, then open WhatsApp text link
-    if (canSharePhoto) {
+    // Fallback: copy photo to clipboard then open WhatsApp
+    if (alert.photo) {
       try {
-        const res = await fetch(alert.photo)
-        const blob = await res.blob()
+        const blob = dataUrlToBlob(alert.photo)
         await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })])
         setPhotoCopied(true)
         setTimeout(() => setPhotoCopied(false), 5000)

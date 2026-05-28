@@ -2,7 +2,7 @@ import { ArrowLeft, MessageSquare, Send, Shield, Bell, Search, CheckCircle2 } fr
 import { useNavigate } from 'react-router-dom'
 import { useLanguage } from '../contexts/LanguageContext'
 
-const BOT_NUMBER = '+237000000000' // replace with actual bot WhatsApp number
+const BOT_NUMBER = '+14155238886' // Twilio WhatsApp Sandbox
 
 const HOW_IT_WORKS = [
   { icon: MessageSquare, color: '#128C7E', title: 'Send a WhatsApp message', body: 'Add the ChildVoice number to your contacts and send "Hello" to get started.' },

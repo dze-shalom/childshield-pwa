@@ -72,11 +72,28 @@ export default function ShareSheet({ open, onClose, message, url, photo, title }
 
   const handleCopyPhoto = async () => {
     if (!photo) return
+    if (!navigator.clipboard?.write) {
+      // iOS Safari doesn't support clipboard image writing
+      setCopied('photo-unsupported')
+      setTimeout(() => setCopied(null), 3000)
+      return
+    }
     try {
-      const blob = dataUrlToBlob(photo)
-      await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })])
-    } catch (_) {}
-    flash('photo')
+      // Clipboard API only accepts image/png — convert from jpeg via canvas
+      const img = new Image()
+      img.src = photo
+      await new Promise((res, rej) => { img.onload = res; img.onerror = rej })
+      const canvas = document.createElement('canvas')
+      canvas.width = img.naturalWidth
+      canvas.height = img.naturalHeight
+      canvas.getContext('2d').drawImage(img, 0, 0)
+      const pngBlob = await new Promise((res) => canvas.toBlob(res, 'image/png'))
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })])
+      flash('photo')
+    } catch {
+      setCopied('photo-unsupported')
+      setTimeout(() => setCopied(null), 3000)
+    }
   }
 
   const handleCopyLink = async () => {
@@ -155,7 +172,9 @@ export default function ShareSheet({ open, onClose, message, url, photo, title }
             <button onClick={handleCopyPhoto} style={rowStyle}>
               <div style={iconBox}><Image size={16} color="var(--text-secondary)" /></div>
               <div style={{ textAlign: 'left' }}>
-                <p style={rowTitle}>{copied === 'photo' ? '✓ Copied!' : 'Copy Photo'}</p>
+                <p style={rowTitle}>
+                  {copied === 'photo' ? '✓ Photo copied!' : copied === 'photo-unsupported' ? 'Not supported on this device' : 'Copy Photo'}
+                </p>
                 <p style={rowSub}>Copy photo to paste in any chat</p>
               </div>
             </button>

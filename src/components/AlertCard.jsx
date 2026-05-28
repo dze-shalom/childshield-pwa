@@ -1,4 +1,5 @@
-﻿import { Link } from 'react-router-dom'
+﻿import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { MapPin, Clock, Eye, Share2, Wifi, MessageSquare, Navigation } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { useLanguage } from '../contexts/LanguageContext'
@@ -17,16 +18,46 @@ const SourceTag = ({ source }) => source === 'bot'
 
 export default function AlertCard({ alert }) {
   const { t } = useLanguage()
-  const a = useTranslatedAlert(alert) // translated description, lastSeen, gender
+  const a = useTranslatedAlert(alert)
   const status = statusConfig[a.status] || statusConfig.active
   const timeAgo = formatDistanceToNow(new Date(a.createdAt), { addSuffix: true })
   const initials = a.name.split(' ').map((n) => n[0]).join('').slice(0, 2)
   const distance = distanceFromCoords(alert.lat, alert.lng)
+  const [photoCopied, setPhotoCopied] = useState(false)
 
-  const handleWhatsAppShare = (e) => {
+  const handleWhatsAppShare = async (e) => {
     e.preventDefault()
     const url = `${window.location.origin}/alert/${a.id}`
     const message = `🚨 *${t('share','missingTitle')}*\n\n*${t('share','platform')}*\n\n👤 *${t('share','name')}:* ${a.name}\n🎂 *${t('share','age')}:* ${a.age} ${t('share','yearsOld')} (${a.gender})\n📍 *${t('share','lastSeen')}:* ${a.lastSeen}\n👗 *${t('share','description')}:* ${a.description}\n\n📞 *${t('share','contact')}:* ${a.contact || 'See link below'}\n\n🔗 ${t('share','reportLink')}:\n${url}\n\n_${t('share','appeal')}_\n_${t('share','footer')}_`
+
+    // Try Web Share API with photo (works on mobile/PWA)
+    if (a.photo && a.photoConsent && navigator.share) {
+      try {
+        const res = await fetch(a.photo)
+        const blob = await res.blob()
+        const file = new File([blob], `missing-${a.name.replace(/\s+/g, '-')}.jpg`, { type: blob.type })
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({ title: `Missing Child: ${a.name}`, text: message, files: [file] })
+          return
+        }
+      } catch (_) {}
+    }
+
+    // Web Share API without photo
+    if (navigator.share) {
+      try { await navigator.share({ title: `Missing Child: ${a.name}`, text: message }); return } catch (_) {}
+    }
+
+    // Fallback: copy photo to clipboard, then open WhatsApp text link
+    if (a.photo && a.photoConsent) {
+      try {
+        const res = await fetch(a.photo)
+        const blob = await res.blob()
+        await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })])
+        setPhotoCopied(true)
+        setTimeout(() => setPhotoCopied(false), 5000)
+      } catch (_) {}
+    }
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank')
   }
 
@@ -71,6 +102,12 @@ export default function AlertCard({ alert }) {
       </div>
 
       <div style={{ height: 1, background: 'var(--divider)', margin: '12px 0' }} />
+
+      {photoCopied && (
+        <div style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 8, padding: '6px 10px', marginBottom: 8, fontSize: 11, color: '#10B981', textAlign: 'center' }}>
+          {t('alert', 'photoCopied')}
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: 8 }}>
         <Link to={`/alert/${a.id}`} style={{ flex: 1, textAlign: 'center', padding: '8px', background: 'var(--overlay-hover)', borderRadius: 10, color: 'var(--text-secondary)', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>

@@ -34,6 +34,7 @@ export default function AlertDetail() {
   const [foundMethod, setFoundMethod] = useState('')
   const [foundMessage, setFoundMessage] = useState('')
   const [foundConfirmed, setFoundConfirmed] = useState(false)
+  const [photoCopied, setPhotoCopied] = useState(false)
 
   if (!alert) return (
     <div className="page flex items-center justify-center">
@@ -54,23 +55,36 @@ export default function AlertDetail() {
 
   const handleShare = async () => {
     const message = shareMessage()
-    // Try Web Share API with photo first (works on mobile browsers)
-    if (alert.photo && navigator.share) {
+    const canSharePhoto = alert.photo && alert.photoConsent
+
+    // Try Web Share API with photo (works on mobile/PWA)
+    if (canSharePhoto && navigator.share) {
       try {
         const res = await fetch(alert.photo)
         const blob = await res.blob()
         const file = new File([blob], `missing-${alert.name.replace(/\s+/g, '-')}.jpg`, { type: blob.type })
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        if (navigator.canShare?.({ files: [file] })) {
           await navigator.share({ title: `Missing Child: ${alert.name}`, text: message, files: [file] })
           return
         }
-      } catch (_) { /* fall through */ }
+      } catch (_) {}
     }
+
     // Web Share API without photo
     if (navigator.share) {
-      try { await navigator.share({ title: `Missing Child: ${alert.name}`, text: message }); return } catch (_) { /* fall through */ }
+      try { await navigator.share({ title: `Missing Child: ${alert.name}`, text: message }); return } catch (_) {}
     }
-    // Fallback: WhatsApp link
+
+    // Fallback: copy photo to clipboard, then open WhatsApp text link
+    if (canSharePhoto) {
+      try {
+        const res = await fetch(alert.photo)
+        const blob = await res.blob()
+        await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })])
+        setPhotoCopied(true)
+        setTimeout(() => setPhotoCopied(false), 5000)
+      } catch (_) {}
+    }
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank')
   }
 
@@ -102,6 +116,12 @@ export default function AlertDetail() {
           </button>
         )}
       </div>
+
+      {photoCopied && (
+        <div style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 10, padding: '8px 12px', marginBottom: 12, fontSize: 12, color: '#10B981', textAlign: 'center' }}>
+          {t('alert', 'photoCopied')}
+        </div>
+      )}
 
       {/* Status Banner */}
       <div className={`card p-3 mb-4 border ${statusBg} text-center`}>

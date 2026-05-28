@@ -1,8 +1,15 @@
 ﻿import { useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Camera, MapPin, Phone, User, AlertCircle, CheckCircle2, X } from 'lucide-react'
+import { useNavigate, Link } from 'react-router-dom'
+import { ArrowLeft, Camera, MapPin, Phone, User, AlertCircle, CheckCircle2, X, Loader2 } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 import { useLanguage } from '../contexts/LanguageContext'
+import { supabase } from '../lib/supabase'
+
+const hashFile = async (file) => {
+  const buf = await file.arrayBuffer()
+  const digest = await crypto.subtle.digest('SHA-256', buf)
+  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('')
+}
 
 const CAMEROON_AREAS = [
   'Buea Town, Buea', 'Molyko, Buea', 'Sandpit, Buea', 'Bonduma, Buea',
@@ -20,29 +27,57 @@ export default function NewAlert() {
   const [submitted, setSubmitted] = useState(false)
   const [submittedId, setSubmittedId] = useState(null)
   const [photoPreview, setPhotoPreview] = useState(null)
+  const [photoChecking, setPhotoChecking] = useState(false)
+  const [photoDuplicate, setPhotoDuplicate] = useState(null) // { id, name } of conflicting alert
   const fileInputRef = useRef(null)
   const [form, setForm] = useState({
     name: '', age: '', gender: '', description: '',
     lastSeen: '', customLocation: '', contact: '', createdBy: '',
-    lat: 4.1597, lng: 9.2306, photo: null,
+    lat: 4.1597, lng: 9.2306, photo: null, photoHash: null, photoConsent: false,
   })
 
   const update = (key, val) => setForm((f) => ({ ...f, [key]: val }))
 
-  const handlePhotoSelect = (e) => {
+  const handlePhotoSelect = async (e) => {
     const file = e.target.files[0]
     if (!file) return
+
+    setPhotoChecking(true)
+    setPhotoDuplicate(null)
+
+    const hash = await hashFile(file)
+
+    // Check Supabase for an active alert already using this exact photo
+    const { data: existing } = await supabase
+      .from('alerts')
+      .select('id, name')
+      .eq('photo_hash', hash)
+      .eq('status', 'active')
+      .maybeSingle()
+      .catch(() => ({ data: null })) // If column doesn't exist yet, ignore
+
+    setPhotoChecking(false)
+
+    if (existing) {
+      setPhotoDuplicate(existing)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      return
+    }
+
+    update('photoHash', hash)
     const reader = new FileReader()
     reader.onload = (ev) => {
       setPhotoPreview(ev.target.result)
-      update('photo', ev.target.result) // store data URL, not File object
+      update('photo', ev.target.result)
     }
     reader.readAsDataURL(file)
   }
 
   const clearPhoto = () => {
     setPhotoPreview(null)
+    setPhotoDuplicate(null)
     update('photo', null)
+    update('photoHash', null)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -127,11 +162,28 @@ export default function NewAlert() {
                 <span className="text-white/30 text-xs">Photo</span>
               </label>
             )}
+            {photoChecking && (
+              <div className="flex items-center gap-2 text-white/40 text-xs">
+                <Loader2 size={12} className="animate-spin" /> Checking photo…
+              </div>
+            )}
             <p className="text-white/40 text-xs text-center">{t('alert','photoHint')}</p>
             <label htmlFor="child-photo-input" className="btn-secondary text-sm py-2 px-4 cursor-pointer">
               {photoPreview ? t('alert','changePhoto') : t('alert','uploadPhoto')}
             </label>
           </div>
+
+          {photoDuplicate && (
+            <div className="card p-3 border-red-500/30 bg-red-500/5 flex items-start gap-2">
+              <AlertCircle size={14} className="text-red-400 flex-shrink-0 mt-0.5" />
+              <p className="text-white/60 text-xs leading-relaxed">
+                This photo is already attached to an active alert for{' '}
+                <span className="text-white font-semibold">{photoDuplicate.name}</span>.{' '}
+                <Link to={`/alert/${photoDuplicate.id}`} className="text-red-400 underline">View that alert</Link>
+                {' '}to avoid a duplicate.
+              </p>
+            </div>
+          )}
 
           <div>
             <label className="text-white/60 text-xs font-medium mb-1.5 block uppercase tracking-wide">{t('alert','fullName')}</label>
@@ -164,7 +216,7 @@ export default function NewAlert() {
 
           <button
             className="btn-primary w-full"
-            disabled={!form.name || !form.age || !form.gender || !form.description}
+            disabled={!form.name || !form.age || !form.gender || !form.description || !!photoDuplicate || photoChecking}
             onClick={() => setStep(2)}
           >
             {t('alert','nextLocation')}
@@ -261,6 +313,18 @@ export default function NewAlert() {
             ))}
           </div>
 
+          {form.photo && (
+            <label className="flex items-start gap-3 cursor-pointer card p-3 border-amber-500/20 bg-amber-500/5">
+              <input
+                type="checkbox"
+                checked={form.photoConsent}
+                onChange={(e) => update('photoConsent', e.target.checked)}
+                className="mt-0.5 flex-shrink-0 accent-amber-400"
+              />
+              <span className="text-white/70 text-xs leading-relaxed">{t('alert', 'photoConsent')}</span>
+            </label>
+          )}
+
           <div className="card p-3 flex items-start gap-2 bg-red-500/5 border-red-500/20">
             <AlertCircle size={14} className="text-red-400 flex-shrink-0 mt-0.5" />
             <p className="text-white/50 text-xs">This alert will be sent to all verified ChildShield users in your area. False alerts may be subject to review.</p>
@@ -268,7 +332,7 @@ export default function NewAlert() {
 
           <div className="flex gap-3">
             <button className="btn-secondary flex-1" onClick={() => setStep(2)}>{t('alert','back')}</button>
-            <button className="btn-primary flex-1" disabled={!form.createdBy || !form.contact} onClick={handleSubmit}>
+            <button className="btn-primary flex-1" disabled={!form.createdBy || !form.contact || (!!form.photo && !form.photoConsent)} onClick={handleSubmit}>
               🚨 {t('alert','send')}
             </button>
           </div>

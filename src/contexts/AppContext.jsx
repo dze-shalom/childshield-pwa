@@ -63,6 +63,8 @@ const toAlert = (row) => ({
   lastSeenTime: row.last_seen_time,
   status: row.status,
   photo: row.photo_url,
+  photoConsent: row.photo_consent ?? false,
+  photoHash: row.photo_hash || null,
   lat: row.lat,
   lng: row.lng,
   contact: row.contact,
@@ -249,7 +251,13 @@ export function AppProvider({ children }) {
       // New missing-child alert (from web app or WhatsApp bot)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'alerts' }, ({ new: row }) => {
         const alert = { ...toAlert(row), sightings: [] }
-        setAlerts((prev) => [alert, ...prev.filter((a) => a.id !== alert.id)])
+        // Skip if already in state (added optimistically by addAlert for the submitting user).
+        // Comparison uses String() to guard against integer vs string ID mismatch between
+        // the REST insert response and the realtime WebSocket payload.
+        setAlerts((prev) => {
+          if (prev.some((a) => String(a.id) === String(alert.id))) return prev
+          return [alert, ...prev]
+        })
 
         // Only notify if alert is within 30km of user's location (or location unknown)
         if (alertIsNearUser(alert.lat, alert.lng)) {
@@ -328,6 +336,8 @@ export function AppProvider({ children }) {
       name: alert.name, age: alert.age, gender: alert.gender,
       description: alert.description, last_seen: alert.lastSeen,
       last_seen_time: alert.lastSeenTime, photo_url: alert.photo,
+      photo_consent: alert.photoConsent ?? false,
+      photo_hash: alert.photoHash || null,
       lat: alert.lat, lng: alert.lng, contact: alert.contact,
       created_by: alert.createdBy, user_id: user?.id || null,
       status: 'active', source: 'web',

@@ -7,25 +7,33 @@ const supabase = createClient(
 
 // ── Groq comparison ───────────────────────────────────────────────────────────
 
+const GROQ_TIMEOUT_MS = 8000
+const MATCH_BATCH_SIZE = 5
+
 async function compareWithGroq(alert, found) {
-  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'llama-3.1-8b-instant',
-      max_tokens: 150,
-      temperature: 0,
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a child safety matching assistant. Compare two child descriptions and return ONLY a valid JSON object — no markdown, no explanation outside the JSON.',
-        },
-        {
-          role: 'user',
-          content: `MISSING CHILD ALERT:
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), GROQ_TIMEOUT_MS)
+
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-8b-instant',
+        max_tokens: 150,
+        temperature: 0,
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a child safety matching assistant. Compare two child descriptions and return ONLY a valid JSON object — no markdown, no explanation outside the JSON.',
+          },
+          {
+            role: 'user',
+            content: `MISSING CHILD ALERT:
 Name: ${alert.name}
 Age: ${alert.age} years old
 Gender: ${alert.gender}
@@ -40,29 +48,33 @@ Location found: ${found.location}
 
 Are these likely the same child? Respond with ONLY:
 {"match":"high"|"medium"|"low"|"no","confidence":0-100,"reason":"one sentence"}`,
-        },
-      ],
-    }),
-  })
-  const data = await res.json()
-  const raw = data.choices?.[0]?.message?.content?.trim() || '{}'
-  try {
-    return JSON.parse(raw.replace(/```json|```/g, '').trim())
-  } catch {
-    return { match: 'no', confidence: 0, reason: 'Parse error' }
+          },
+        ],
+      }),
+    })
+    clearTimeout(timer)
+    const data = await res.json()
+    const raw = data.choices?.[0]?.message?.content?.trim() || '{}'
+    try {
+      return JSON.parse(raw.replace(/```json|```/g, '').trim())
+    } catch {
+      return { match: 'no', confidence: 0, reason: 'Parse error' }
+    }
+  } catch (err) {
+    clearTimeout(timer)
+    return { match: 'no', confidence: 0, reason: err.name === 'AbortError' ? 'Timeout' : 'Error' }
   }
 }
 
 // ── WhatsApp notification to parent ──────────────────────────────────────────
 
 async function notifyParent(alert, found) {
-  const sid  = process.env.TWILIO_ACCOUNT_SID
+  const sid   = process.env.TWILIO_ACCOUNT_SID
   const token = process.env.TWILIO_AUTH_TOKEN
   const from  = process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+14155238886'
 
   if (!sid || !token || !alert.contact) return
 
-  // Normalise phone number to E.164 format
   const digits = alert.contact.replace(/\s+/g, '').replace(/^00/, '+')
   const to = digits.startsWith('+') ? `whatsapp:${digits}` : `whatsapp:+${digits}`
 
@@ -95,6 +107,37 @@ _If this is a mistake, ignore this message._`
   ).catch(err => console.error('WhatsApp send error:', err))
 }
 
+// ── Run comparisons in capped batches ────────────────────────────────────────
+
+async function compareBatched(alerts, found) {
+  const results = []
+  for (let i = 0; i < alerts.length; i += MATCH_BATCH_SIZE) {
+    const batch = alerts.slice(i, i + MATCH_BATCH_SIZE)
+    const batchResults = await Promise.all(
+      batch.map(async (alert) => {
+        const result = await compareWithGroq(alert, found)
+        return {
+          alert: {
+            id: alert.id,
+            name: alert.name,
+            age: alert.age,
+            gender: alert.gender,
+            description: alert.description,
+            lastSeen: alert.last_seen,
+            contact: alert.contact,
+            createdBy: alert.created_by,
+          },
+          confidence: result.confidence ?? 0,
+          level: result.match ?? 'no',
+          reason: result.reason ?? '',
+        }
+      })
+    )
+    results.push(...batchResults)
+  }
+  return results
+}
+
 // ── Main handler ──────────────────────────────────────────────────────────────
 
 export default async function handler(req, res) {
@@ -105,7 +148,6 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing required fields' })
   }
 
-  // Fetch all active missing alerts
   const { data: alerts, error } = await supabase
     .from('alerts')
     .select('id, name, age, gender, description, last_seen, contact, created_by')
@@ -115,34 +157,12 @@ export default async function handler(req, res) {
   if (error) return res.status(500).json({ error: 'Failed to fetch alerts' })
   if (!alerts?.length) return res.status(200).json({ matches: [] })
 
-  // Compare against every active alert
-  const results = await Promise.all(
-    alerts.map(async (alert) => {
-      const result = await compareWithGroq(alert, found)
-      return {
-        alert: {
-          id: alert.id,
-          name: alert.name,
-          age: alert.age,
-          gender: alert.gender,
-          description: alert.description,
-          lastSeen: alert.last_seen,
-          contact: alert.contact,
-          createdBy: alert.created_by,
-        },
-        confidence: result.confidence ?? 0,
-        level: result.match ?? 'no',
-        reason: result.reason ?? '',
-      }
-    })
-  )
+  const results = await compareBatched(alerts, found)
 
-  // Filter real matches
   const matches = results
     .filter(r => r.level !== 'no' && r.confidence >= 40)
     .sort((a, b) => b.confidence - a.confidence)
 
-  // Automatically notify parents of high/medium confidence matches via WhatsApp
   const toNotify = matches.filter(m => m.confidence >= 65)
   await Promise.all(toNotify.map(m => notifyParent(m.alert, found)))
 

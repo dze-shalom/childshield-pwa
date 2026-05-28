@@ -59,6 +59,8 @@ export const translations = {
     contactNum:  { en: 'Contact Number *',          fr: 'Numéro de Contact *',      pe: 'Phone Number *' },
     summary:     { en: 'Alert Summary',             fr: 'Résumé de l\'Alerte',      pe: 'Summary of Alert' },
     photoAttached:{ en: 'Photo attached',           fr: 'Photo jointe',             pe: 'Photo dey' },
+    photoConsent: { en: 'I give permission for this child\'s photo to be shared publicly to help find them', fr: 'Je donne la permission de partager publiquement la photo de cet enfant pour aider à le retrouver', pe: 'I allow make dem share dis pikin photo for public so dem go find am' },
+    photoCopied:  { en: 'Photo copied! Open WhatsApp and paste it.', fr: 'Photo copiée! Ouvrez WhatsApp et collez.', pe: 'Photo don copy! Open WhatsApp paste am.' },
     falseAlert:  { en: 'This alert will be sent to all verified ChildShield users in your area. False alerts may be subject to review.', fr: 'Cette alerte sera envoyée à tous les utilisateurs ChildShield vérifiés dans votre zone. Les fausses alertes peuvent être examinées.', pe: 'Dis alert go reach all ChildShield people for your area. False alert go reviewed.' },
     back:        { en: '← Back',                   fr: '← Retour',                 pe: '← Go Back' },
     send:        { en: 'Send Alert Now',            fr: 'Envoyer l\'Alerte Maintenant', pe: 'Send Alert Now' },

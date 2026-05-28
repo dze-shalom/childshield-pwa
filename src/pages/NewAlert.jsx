@@ -219,7 +219,7 @@ export default function NewAlert() {
 
           <button
             className="btn-primary w-full"
-            disabled={!form.name || !form.age || !form.gender || !form.description || !!photoDuplicate || photoChecking}
+            disabled={!form.name || !form.age || !form.gender || !form.description || !!photoDuplicate}
             onClick={() => setStep(2)}
           >
             {t('alert','nextLocation')}

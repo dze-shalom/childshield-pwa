@@ -2,6 +2,16 @@ import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching'
 import { registerRoute } from 'workbox-routing'
 import { CacheFirst, NetworkFirst, StaleWhileRevalidate } from 'workbox-strategies'
 import { ExpirationPlugin } from 'workbox-expiration'
+import { clientsClaim } from 'workbox-core'
+
+// Take control of all pages immediately on activation
+clientsClaim()
+
+// Required by vite-plugin-pwa's autoUpdate: when the client posts SKIP_WAITING,
+// the new SW skips the waiting phase and activates, then the page reloads once.
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') self.skipWaiting()
+})
 
 // Injected by vite-plugin-pwa at build time
 precacheAndRoute(self.__WB_MANIFEST)

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Camera, Phone, CheckCircle2, X, User, AlertCircle } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 import { useLanguage } from '../contexts/LanguageContext'
+import { compressImage } from '../lib/imageUtils'
 
 const AREAS = [
   'Buea Town, Buea', 'Molyko, Buea', 'Sandpit, Buea', 'Bonduma, Buea',
@@ -34,12 +35,12 @@ export default function FoundChildReport() {
   })
   const update = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
-  const handlePhoto = (e) => {
+  const handlePhoto = async (e) => {
     const file = e.target.files[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = (ev) => { setPhotoPreview(ev.target.result); update('photo', ev.target.result) }
-    reader.readAsDataURL(file)
+    const compressed = await compressImage(file)
+    setPhotoPreview(compressed)
+    update('photo', compressed)
   }
 
   // Submit → save → auto-match → auto-notify parents

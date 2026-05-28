@@ -4,6 +4,7 @@ import { ArrowLeft, Camera, MapPin, Phone, User, AlertCircle, CheckCircle2, X, L
 import { useApp } from '../contexts/AppContext'
 import { useLanguage } from '../contexts/LanguageContext'
 import { supabase } from '../lib/supabase'
+import { compressImage } from '../lib/imageUtils'
 
 const hashFile = async (file) => {
   const buf = await file.arrayBuffer()
@@ -65,12 +66,9 @@ export default function NewAlert() {
     }
 
     update('photoHash', hash)
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      setPhotoPreview(ev.target.result)
-      update('photo', ev.target.result)
-    }
-    reader.readAsDataURL(file)
+    const compressed = await compressImage(file)
+    setPhotoPreview(compressed)
+    update('photo', compressed)
   }
 
   const clearPhoto = () => {

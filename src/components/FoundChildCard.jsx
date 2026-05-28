@@ -22,6 +22,7 @@ export default function FoundChildCard({ found }) {
     ? formatDistanceToNow(new Date(f.foundAt), { addSuffix: true })
     : ''
   const [photoCopied, setPhotoCopied] = useState(false)
+  const [msgCopied, setMsgCopied] = useState(false)
 
   const handleShare = async (e) => {
     e.preventDefault()
@@ -32,6 +33,7 @@ export default function FoundChildCard({ found }) {
     const msg =
       `🟡 *${t('share', 'platform')}*\n\n` +
       `*FOUND CHILD — HELP IDENTIFY*\n\n` +
+      (f.name ? `🏷️ *Child's name:* ${f.name}\n` : '') +
       `👶 *${t('share', 'description')}:* ${f.description}\n` +
       `📍 *${t('share', 'lastSeen')}:* ${f.location}\n` +
       (f.ageEstimate ? `🎂 *${t('share', 'age')}:* ${f.ageEstimate}\n` : '') +
@@ -39,24 +41,29 @@ export default function FoundChildCard({ found }) {
       `\n📞 *${t('share', 'contact')}:* ${f.contact}\n\n` +
       `_${t('share', 'footer')}_\n${url}`
 
-    // Try Web Share API with photo (works on Android/iOS PWA)
+    // Try Web Share API with photo
+    // NOTE: WhatsApp drops the 'text' field when files are attached, so we
+    // pre-copy the message text to clipboard and remind the user to paste it.
     if (f.photo && navigator.share) {
       try {
         const blob = dataUrlToBlob(f.photo)
         const file = new File([blob], 'found-child.jpg', { type: blob.type })
         if (navigator.canShare?.({ files: [file] })) {
+          try { await navigator.clipboard.writeText(msg) } catch (_) {}
           await navigator.share({ title: 'Found Child — Help Identify', text: msg, files: [file] })
+          setMsgCopied(true)
+          setTimeout(() => setMsgCopied(false), 8000)
           return
         }
       } catch (_) {}
     }
 
-    // Web Share API without photo
+    // Web Share API without photo — text goes through fine
     if (navigator.share) {
       try { await navigator.share({ title: 'Found Child — Help Identify', text: msg }); return } catch (_) {}
     }
 
-    // Fallback: copy photo to clipboard then open WhatsApp
+    // Fallback: copy photo to clipboard then open WhatsApp with text pre-filled
     if (f.photo) {
       try {
         const blob = dataUrlToBlob(f.photo)
@@ -135,6 +142,11 @@ export default function FoundChildCard({ found }) {
       {photoCopied && (
         <div style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 8, padding: '6px 10px', marginBottom: 8, fontSize: 11, color: '#10B981', textAlign: 'center' }}>
           {t('alert', 'photoCopied')}
+        </div>
+      )}
+      {msgCopied && (
+        <div style={{ background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 8, padding: '6px 10px', marginBottom: 8, fontSize: 11, color: '#60A5FA', textAlign: 'center' }}>
+          {t('alert', 'msgCopied')}
         </div>
       )}
 

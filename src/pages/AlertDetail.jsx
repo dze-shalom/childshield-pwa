@@ -24,8 +24,12 @@ export default function AlertDetail() {
   const alert = alerts.find((a) => String(a.id) === String(id))
   const a = useTranslatedAlert(alert) // translated description, lastSeen, gender
   const distance = alert ? distanceFromCoords(alert.lat, alert.lng) : null
-  // Only the user who created the alert can mark it as found
-  const isOwner = !!(user?.id && alert?.userId && user.id === alert.userId)
+  // Owner = logged-in creator (userId match) OR the device that created the alert (localStorage)
+  const _myAlertIds = (() => { try { return JSON.parse(localStorage.getItem('childshield_my_alert_ids') || '[]') } catch { return [] } })()
+  const isOwner = !!(
+    (user?.id && alert?.userId && user.id === alert.userId) ||
+    _myAlertIds.includes(String(alert?.id))
+  )
   const [showSightingForm, setShowSightingForm] = useState(false)
   const [sighting, setSighting] = useState({ location: '', description: '', reportedBy: 'Anonymous' })
   const [submitted, setSubmitted] = useState(false)
@@ -182,7 +186,15 @@ export default function AlertDetail() {
               </div>
               <div className="flex gap-2">
                 <button className="btn-secondary flex-1 py-2 text-sm" onClick={() => setShowFoundForm(false)}>{t('detail','cancel')}</button>
-                <button disabled={!foundMethod} onClick={async () => { await resolveAlert(alert.id); setFoundConfirmed(true); setShowFoundForm(false) }} style={{ flex: 2, background: foundMethod ? '#10B981' : 'rgba(16,185,129,0.15)', border: 'none', borderRadius: 12, padding: '10px', color: foundMethod ? '#fff' : 'rgba(16,185,129,0.4)', fontWeight: 700, fontSize: 13, cursor: foundMethod ? 'pointer' : 'default' }}>
+                <button disabled={!foundMethod} onClick={async () => {
+                  try {
+                    await resolveAlert(alert.id)
+                    setFoundConfirmed(true)
+                    setShowFoundForm(false)
+                  } catch {
+                    alert('You can only mark alerts that you created as found.')
+                  }
+                }} style={{ flex: 2, background: foundMethod ? '#10B981' : 'rgba(16,185,129,0.15)', border: 'none', borderRadius: 12, padding: '10px', color: foundMethod ? '#fff' : 'rgba(16,185,129,0.4)', fontWeight: 700, fontSize: 13, cursor: foundMethod ? 'pointer' : 'default' }}>
                   ✅ {t('detail','confirmFound')}
                 </button>
               </div>

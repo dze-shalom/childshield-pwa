@@ -180,6 +180,14 @@ export function AppProvider({ children }) {
   const saveCache = (key, data) => { try { localStorage.setItem(key, JSON.stringify(data)) } catch {} }
   const loadCache = (key) => { try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : null } catch { return null } }
 
+  // ── Ownership tracking (device-level, covers guests) ─────────────────────
+  const _claimAlert = (id) => {
+    try {
+      const ids = JSON.parse(localStorage.getItem('childshield_my_alert_ids') || '[]')
+      if (!ids.includes(id)) { ids.push(id); localStorage.setItem('childshield_my_alert_ids', JSON.stringify(ids)) }
+    } catch {}
+  }
+
   // ── Offline submission queue ──────────────────────────────────────────────
   const enqueueOffline = (type, payload) => {
     const queue = loadCache('childshield_offline_queue') || []
@@ -330,6 +338,7 @@ export function AppProvider({ children }) {
         userId: user?.id || null,
       }
       setAlerts((prev) => [newAlert, ...prev])
+      _claimAlert(String(newAlert.id))
       return newAlert
     }
 
@@ -348,6 +357,7 @@ export function AppProvider({ children }) {
     if (!navigator.onLine) {
       const optimistic = { ...alert, id: `offline_${Date.now()}`, status: 'active', sightings: [], createdAt: new Date().toISOString(), userId: user?.id || null }
       setAlerts((prev) => [optimistic, ...prev])
+      _claimAlert(String(optimistic.id))
       enqueueOffline('alert', payload)
       return optimistic
     }
@@ -356,6 +366,8 @@ export function AppProvider({ children }) {
     if (error) throw error
     const newAlert = { ...toAlert(data), sightings: [] }
     setAlerts((prev) => [newAlert, ...prev.filter((a) => a.id !== newAlert.id)])
+    // Track this alert as "mine" on this device so guests can also resolve their own alerts
+    _claimAlert(String(newAlert.id))
     return newAlert
   }
 
@@ -423,8 +435,17 @@ export function AppProvider({ children }) {
       setAlerts((prev) => prev.map((a) => a.id === alertId ? { ...a, status: 'resolved', resolvedAt } : a))
       return
     }
-    const { error } = await supabase.from('alerts').update({ status: 'resolved', resolved_at: resolvedAt }).eq('id', alertId)
+    // Server-side ownership: if the alert has a user_id, only that user can resolve it
+    const alertInState = alerts.find((a) => String(a.id) === String(alertId))
+    let query = supabase.from('alerts')
+      .update({ status: 'resolved', resolved_at: resolvedAt })
+      .eq('id', alertId)
+    if (alertInState?.userId && user?.id) {
+      query = query.eq('user_id', user.id)
+    }
+    const { data, error } = await query.select('id')
     if (error) throw error
+    if (!data?.length) throw new Error('Unauthorized: you can only resolve alerts you created')
     setAlerts((prev) => prev.map((a) => a.id === alertId ? { ...a, status: 'resolved', resolvedAt } : a))
   }
 
